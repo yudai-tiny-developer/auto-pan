@@ -17,13 +17,7 @@ function capture(tabId, windowId) {
 			video: false,
 			audio: true
 		}, (stream) => {
-			const source = context.createMediaStreamSource(stream);
-			const panner = context.createStereoPanner();
-			tabId_to_panner.set(tabId, panner);
-
-			source.connect(panner);
-			panner.connect(context.destination);
-
+			addPanner(tabId, stream);
 			pan(tabId, windowId);
 		});
 	} else {
@@ -45,7 +39,7 @@ chrome.windows.onBoundsChanged.addListener(window => {
 	}
 });
 
-function update(tabId, windowId) {
+function addMap(tabId, windowId) {
 	let tabIds = windowId_to_tabId.get(windowId);
 	if (tabIds) {
 		tabIds.add(tabId);
@@ -56,32 +50,91 @@ function update(tabId, windowId) {
 	}
 }
 
+function removeMap(tabId, windowId) {
+	if (tabId) {
+		let tabIds = windowId_to_tabId.get(windowId);
+		if (tabIds) {
+			tabIds.delete(tabId);
+		}
+	} else {
+		windowId_to_tabId.delete(windowId);
+	}
+}
+
+function addPanner(tabId, stream) {
+	const source = context.createMediaStreamSource(stream);
+	const panner = context.createStereoPanner();
+	tabId_to_panner.set(tabId, panner);
+
+	source.connect(panner);
+	panner.connect(context.destination);
+}
+
+function removePanner(tabId) {
+	tabId_to_panner.delete(tabId);
+}
+
 chrome.contextMenus.create({
-	id: 'AutoPan',
+	id: 'hkghcgebakholhmhijhpipamdmbcnbgj',
 	title: 'Enable Auto Pan',
 	type: 'normal',
-	contexts: ['all']
+	contexts: ['page', 'frame', 'image', 'video']
 }, () => { });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-	const tabId = tab.id;
-	const windowId = tab.windowId;
+	addMap(tab.id, tab.windowId);
+	capture(tab.id, tab.windowId);
 
-	update(tabId, windowId);
-	capture(tabId, windowId);
+	log('contextMenus.onClicked: ' + tab.id);
 });
 
 chrome.browserAction.onClicked.addListener(tab => {
-	const tabId = tab.id;
-	const windowId = tab.windowId;
+	addMap(tab.id, tab.windowId);
+	capture(tab.id, tab.windowId);
 
-	update(tabId, windowId);
-	capture(tabId, windowId);
+	log('browserAction.onClicked: ' + tab.id);
 });
 
 chrome.tabs.onAttached.addListener((tabId, attachInfo) => {
-	const windowId = attachInfo.newWindowId;
+	addMap(tabId, attachInfo.newWindowId);
+	capture(tabId, attachInfo.newWindowId);
 
-	update(tabId, windowId);
-	capture(tabId, windowId);
+	log('tabs.onAttached: ' + tabId);
 });
+
+chrome.tabs.onDetached.addListener((tabId, detachInfo) => {
+	removeMap(tabId, detachInfo.oldWindowId);
+
+	log('tabs.onDetached: ' + tabId);
+});
+
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+	removeMap(tabId, removeInfo.windowId);
+	removePanner(tabId);
+
+	log('tabs.onRemoved: ' + tabId);
+});
+
+chrome.windows.onRemoved.addListener(windowId => {
+	removeMap(undefined, windowId);
+
+	log('windows.onRemoved: ' + windowId);
+});
+
+function log(title) {
+	setTimeout(() => {
+		console.log(title);
+		console.log('tabId_to_panner: ');
+		tabId_to_panner.forEach((value, key, map) => console.log('\t' + key + ' -> ' + value));
+		console.log('windowId_to_tabId: ');
+		windowId_to_tabId.forEach((value, key, map) => console.log('\t' + key + ' -> ' + join(value)));
+	}, 1000);
+}
+
+function join(value) {
+	if (value) {
+		return Array.from(value).join(',');
+	} else {
+		return undefined;
+	}
+}
