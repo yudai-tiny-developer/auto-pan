@@ -27,7 +27,9 @@ function capture(tabId, windowId) {
 
 function pan(tabId, windowId) {
 	chrome.windows.get(windowId, window => {
-		tabId_to_panner.get(tabId).pan.value = Math.min(1, Math.max(-1, Math.tanh((window.left + window.width / 2.0 - center_x) / center_x) * 1.5));
+		const pan = tabId_to_panner.get(tabId).pan;
+		pan.value = Math.min(1, Math.max(-1, Math.tanh((window.left + window.width / 2.0 - center_x) / center_x) * 1.5));
+		console.log(tabId + ': ' + pan.value);
 	});
 }
 
@@ -125,16 +127,16 @@ function log(title) {
 	setTimeout(() => {
 		console.log(title);
 		console.log('tabId_to_panner: ');
-		tabId_to_panner.forEach((value, key, map) => console.log('\t' + key + ' -> ' + value));
+		tabId_to_panner.forEach((value, key, map) => console.log('\t' + key + ': ' + value));
 		console.log('windowId_to_tabId: ');
-		windowId_to_tabId.forEach((value, key, map) => console.log('\t' + key + ' -> ' + join(value)));
+		windowId_to_tabId.forEach((value, key, map) => console.log('\t' + key + ': ' + join(value)));
 	}, 1000);
 }
 
 function join(value) {
 	if (value) {
-		return Array.from(value).join(',');
+		return '[' + Array.from(value).join(',') + ']';
 	} else {
-		return undefined;
+		return '[]';
 	}
 }
