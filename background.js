@@ -37,6 +37,25 @@ function pan(tabId, windowId) {
 	});
 }
 
+chrome.windows.onBoundsChanged.addListener(window => {
+	if (windowId_to_tabId.has(window.id)) {
+		for (const tabId of windowId_to_tabId.get(window.id)) {
+			capture(tabId, window.id);
+		}
+	}
+});
+
+function update(tabId, windowId) {
+	let tabIds = windowId_to_tabId.get(windowId);
+	if (tabIds) {
+		tabIds.add(tabId);
+	} else {
+		tabIds = new Set();
+		tabIds.add(tabId);
+		windowId_to_tabId.set(windowId, tabIds);
+	}
+}
+
 chrome.contextMenus.create({
 	id: 'AutoPan',
 	title: 'Enable Auto Pan',
@@ -45,35 +64,24 @@ chrome.contextMenus.create({
 }, () => { });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-	let tabIds = windowId_to_tabId.get(tab.windowId);
-	if (tabIds) {
-		tabIds.add(tab.id);
-	} else {
-		tabIds = new Set();
-		tabIds.add(tab.id);
-		windowId_to_tabId.set(tab.windowId, tabIds);
-	}
+	const tabId = tab.id;
+	const windowId = tab.windowId;
 
-	capture(tab.id, tab.windowId);
+	update(tabId, windowId);
+	capture(tabId, windowId);
 });
 
 chrome.browserAction.onClicked.addListener(tab => {
-	let tabIds = windowId_to_tabId.get(tab.windowId);
-	if (tabIds) {
-		tabIds.add(tab.id);
-	} else {
-		tabIds = new Set();
-		tabIds.add(tab.id);
-		windowId_to_tabId.set(tab.windowId, tabIds);
-	}
+	const tabId = tab.id;
+	const windowId = tab.windowId;
 
-	capture(tab.id, tab.windowId);
+	update(tabId, windowId);
+	capture(tabId, windowId);
 });
 
-chrome.windows.onBoundsChanged.addListener(window => {
-	if (windowId_to_tabId.has(window.id)) {
-		for (const tabId of windowId_to_tabId.get(window.id)) {
-			capture(tabId, window.id);
-		}
-	}
+chrome.tabs.onAttached.addListener((tabId, attachInfo) => {
+	const windowId = attachInfo.newWindowId;
+
+	update(tabId, windowId);
+	capture(tabId, windowId);
 });
