@@ -33,7 +33,8 @@ function capture(tabId, windowId) {
 
 function pan(tabId, windowId) {
 	chrome.windows.get(windowId, window => {
-		tabId_to_panner.get(tabId).pan.value = Math.min(1, Math.max(-1, Math.tanh((window.left + window.width / 2.0 - center_x) / center_x) * 2.0));
+		tabId_to_panner.get(tabId).pan.value = Math.min(1, Math.max(-1, Math.tanh((window.left + window.width / 2.0 - center_x) / center_x) * 1.5));
+		console.log(tabId_to_panner.get(tabId).pan.value);
 	});
 }
 
@@ -45,26 +46,26 @@ chrome.contextMenus.create({
 }, () => { });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-	const tabIds = windowId_to_tabId.get(windowId);
+	let tabIds = windowId_to_tabId.get(tab.windowId);
 	if (tabIds) {
-		tabIds.add(tabId);
+		tabIds.add(tab.id);
 	} else {
-		const tabIds = new Set();
-		tabIds.add(tabId);
-		windowId_to_tabId.set(windowId, tabIds);
+		tabIds = new Set();
+		tabIds.add(tab.id);
+		windowId_to_tabId.set(tab.windowId, tabIds);
 	}
 
 	capture(tab.id, tab.windowId);
 });
 
 chrome.browserAction.onClicked.addListener(tab => {
-	const tabIds = windowId_to_tabId.get(windowId);
+	let tabIds = windowId_to_tabId.get(tab.windowId);
 	if (tabIds) {
-		tabIds.add(tabId);
+		tabIds.add(tab.id);
 	} else {
-		const tabIds = new Set();
-		tabIds.add(tabId);
-		windowId_to_tabId.set(windowId, tabIds);
+		tabIds = new Set();
+		tabIds.add(tab.id);
+		windowId_to_tabId.set(tab.windowId, tabIds);
 	}
 
 	capture(tab.id, tab.windowId);
