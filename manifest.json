@@ -1,0 +1,20 @@
+{
+   "manifest_version": 2,
+   "name": "Auto Pan",
+   "version": "1.0.0",
+   "description": "Auto Pan",
+   "background": {
+      "scripts": [
+         "background.js"
+      ],
+      "persistent": true
+   },
+   "browser_action": {},
+   "permissions": [
+      "contextMenus",
+      "tabs",
+      "activeTab",
+      "tabCapture",
+      "system.display"
+   ]
+}
