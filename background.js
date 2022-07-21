@@ -34,7 +34,6 @@ function capture(tabId, windowId) {
 function pan(tabId, windowId) {
 	chrome.windows.get(windowId, window => {
 		tabId_to_panner.get(tabId).pan.value = Math.min(1, Math.max(-1, Math.tanh((window.left + window.width / 2.0 - center_x) / center_x) * 1.5));
-		console.log(tabId_to_panner.get(tabId).pan.value);
 	});
 }
 
