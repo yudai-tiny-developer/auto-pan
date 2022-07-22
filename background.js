@@ -3,22 +3,16 @@
 let center_x;
 let tabId_to_panner = new Map();
 let windowId_to_tabId = new Map();
-
 const context = new AudioContext();
 
-chrome.system.display.getInfo({}, displayInfo => {
-	const bounds = displayInfo[0].bounds;
-	center_x = (bounds.width - bounds.left) / 2;
-});
-
 function capture(tabId, windowId) {
-	if (!tabId_to_panner.has(tabId)) {
+	if (tabId_to_panner.has(tabId)) {
+		pan(tabId, windowId);
+	} else {
 		chrome.tabCapture.capture({ audio: true, video: false }, (stream) => {
 			addPanner(tabId, stream);
 			pan(tabId, windowId);
 		});
-	} else {
-		pan(tabId, windowId);
 	}
 }
 
@@ -30,28 +24,18 @@ function pan(tabId, windowId) {
 	});
 }
 
-chrome.windows.onBoundsChanged.addListener(window => {
-	if (windowId_to_tabId.has(window.id)) {
-		for (const tabId of windowId_to_tabId.get(window.id)) {
-			capture(tabId, window.id);
-		}
-	}
-});
-
 function addMap(tabId, windowId) {
 	let tabIds = windowId_to_tabId.get(windowId);
-	if (tabIds) {
-		tabIds.add(tabId);
-	} else {
+	if (!tabIds) {
 		tabIds = new Set();
-		tabIds.add(tabId);
 		windowId_to_tabId.set(windowId, tabIds);
 	}
+	tabIds.add(tabId);
 }
 
 function removeMap(tabId, windowId) {
 	if (tabId) {
-		let tabIds = windowId_to_tabId.get(windowId);
+		const tabIds = windowId_to_tabId.get(windowId);
 		if (tabIds) {
 			tabIds.delete(tabId);
 		}
@@ -61,17 +45,29 @@ function removeMap(tabId, windowId) {
 }
 
 function addPanner(tabId, stream) {
-	const source = context.createMediaStreamSource(stream);
 	const panner = context.createStereoPanner();
-	tabId_to_panner.set(tabId, panner);
-
-	source.connect(panner);
+	context.createMediaStreamSource(stream).connect(panner);
 	panner.connect(context.destination);
+
+	tabId_to_panner.set(tabId, panner);
 }
 
 function removePanner(tabId) {
 	tabId_to_panner.delete(tabId);
 }
+
+chrome.system.display.getInfo({}, displayInfo => {
+	const bounds = displayInfo[0].bounds;
+	center_x = (bounds.width - bounds.left) / 2;
+});
+
+chrome.windows.onBoundsChanged.addListener(window => {
+	if (windowId_to_tabId.has(window.id)) {
+		for (const tabId of windowId_to_tabId.get(window.id)) {
+			capture(tabId, window.id);
+		}
+	}
+});
 
 chrome.contextMenus.create({
 	id: 'hkghcgebakholhmhijhpipamdmbcnbgj',
@@ -84,7 +80,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 	addMap(tab.id, tab.windowId);
 	capture(tab.id, tab.windowId);
 
-	log('contextMenus.onClicked: ' + tab.id);
+	//log('contextMenus.onClicked: ' + tab.id);
 });
 
 chrome.browserAction.onClicked.addListener(tab => {
