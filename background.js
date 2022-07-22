@@ -13,10 +13,7 @@ chrome.system.display.getInfo({}, displayInfo => {
 
 function capture(tabId, windowId) {
 	if (!tabId_to_panner.has(tabId)) {
-		chrome.tabCapture.capture({
-			video: false,
-			audio: true
-		}, (stream) => {
+		chrome.tabCapture.capture({ audio: true, video: false }, (stream) => {
 			addPanner(tabId, stream);
 			pan(tabId, windowId);
 		});
@@ -29,7 +26,7 @@ function pan(tabId, windowId) {
 	chrome.windows.get(windowId, window => {
 		const pan = tabId_to_panner.get(tabId).pan;
 		pan.value = Math.min(1, Math.max(-1, Math.tanh((window.left + window.width / 2.0 - center_x) / center_x) * 1.5));
-		console.log(tabId + ': ' + pan.value);
+		//console.log(tabId + ': ' + pan.value);
 	});
 }
 
@@ -94,33 +91,33 @@ chrome.browserAction.onClicked.addListener(tab => {
 	addMap(tab.id, tab.windowId);
 	capture(tab.id, tab.windowId);
 
-	log('browserAction.onClicked: ' + tab.id);
+	//log('browserAction.onClicked: ' + tab.id);
 });
 
 chrome.tabs.onAttached.addListener((tabId, attachInfo) => {
 	addMap(tabId, attachInfo.newWindowId);
 	capture(tabId, attachInfo.newWindowId);
 
-	log('tabs.onAttached: ' + tabId);
+	//log('tabs.onAttached: ' + tabId);
 });
 
 chrome.tabs.onDetached.addListener((tabId, detachInfo) => {
 	removeMap(tabId, detachInfo.oldWindowId);
 
-	log('tabs.onDetached: ' + tabId);
+	//log('tabs.onDetached: ' + tabId);
 });
 
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
 	removeMap(tabId, removeInfo.windowId);
 	removePanner(tabId);
 
-	log('tabs.onRemoved: ' + tabId);
+	//log('tabs.onRemoved: ' + tabId);
 });
 
 chrome.windows.onRemoved.addListener(windowId => {
 	removeMap(undefined, windowId);
 
-	log('windows.onRemoved: ' + windowId);
+	//log('windows.onRemoved: ' + windowId);
 });
 
 function log(title) {
