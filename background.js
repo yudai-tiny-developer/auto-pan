@@ -6,17 +6,13 @@ let tabId_to_panner = new Map();
 let windowId_to_tabId = new Map();
 const context = new AudioContext();
 
-function capture(tabId, windowId, type = 'StereoPan') {
+function capture(tabId, windowId, create, type = 'StereoPan') {
 	if (tabId_to_panner.has(tabId)) {
 		pan(tabId, windowId, type);
-	} else {
+	} else if (create) {
 		chrome.tabCapture.capture({ audio: true, video: false }, (stream) => {
-			if (stream) {
-				addPanner(tabId, stream, type);
-				pan(tabId, windowId, type);
-			} else {
-				console.log('Chrome pages cannot be captured.');
-			}
+			addPanner(tabId, stream, type);
+			pan(tabId, windowId, type);
 		});
 	}
 }
@@ -89,7 +85,7 @@ chrome.system.display.getInfo({}, displayInfo => {
 chrome.windows.onBoundsChanged.addListener(window => {
 	if (windowId_to_tabId.has(window.id)) {
 		for (const tabId of windowId_to_tabId.get(window.id)) {
-			capture(tabId, window.id);
+			capture(tabId, window.id, false);
 		}
 	}
 });
@@ -103,17 +99,17 @@ chrome.contextMenus.create({
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
 	addMap(tab.id, tab.windowId);
-	capture(tab.id, tab.windowId);
+	capture(tab.id, tab.windowId, true);
 });
 
 chrome.browserAction.onClicked.addListener(tab => {
 	addMap(tab.id, tab.windowId);
-	capture(tab.id, tab.windowId);
+	capture(tab.id, tab.windowId, true);
 });
 
 chrome.tabs.onAttached.addListener((tabId, attachInfo) => {
 	addMap(tabId, attachInfo.newWindowId);
-	capture(tabId, attachInfo.newWindowId);
+	capture(tabId, attachInfo.newWindowId, false);
 });
 
 chrome.tabs.onDetached.addListener((tabId, detachInfo) => {
