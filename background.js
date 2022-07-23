@@ -11,8 +11,12 @@ function capture(tabId, windowId) {
 		pan(tabId, windowId);
 	} else {
 		chrome.tabCapture.capture({ audio: true, video: false }, (stream) => {
-			addPanner(tabId, stream);
-			pan(tabId, windowId);
+			if (stream) {
+				addPanner(tabId, stream);
+				pan(tabId, windowId);
+			} else {
+				console.log('Chrome pages cannot be captured.');
+			}
 		});
 	}
 }
@@ -27,7 +31,7 @@ function pan(tabId, windowId, type = 'StereoPan') {
 				panner.positionZ.value = -1;
 				break;
 			case 'StereoPan':
-				panner.pan.setTargetAtTime(Math.min(1, Math.max(-1, (window.left + window.width / 2 - center_x) / center_x)), context.currentTime, 0.2);
+				panner.pan.setTargetAtTime(Math.min(1, Math.max(-1, (window.left + window.width / 2 - center_x) / center_x) * 1.25), context.currentTime, 0.2);
 				break;
 		}
 	});
