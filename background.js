@@ -1,6 +1,7 @@
 // Impossible to implement with Manifest V3
 
 let center_x;
+let center_y;
 let tabId_to_panner = new Map();
 let windowId_to_tabId = new Map();
 const context = new AudioContext();
@@ -18,9 +19,9 @@ function capture(tabId, windowId) {
 
 function pan(tabId, windowId) {
 	chrome.windows.get(windowId, window => {
-		const pan = tabId_to_panner.get(tabId).pan;
-		pan.value = Math.min(1, Math.max(-1, Math.tanh((window.left + window.width / 2.0 - center_x) / center_x) * 1.5));
-		//console.log(tabId + ': ' + pan.value);
+		const panner = tabId_to_panner.get(tabId);
+		panner.positionX.value = window.left + window.width / 2 - center_x;
+		panner.positionY.value = -(window.top + window.height / 2 - center_y);
 	});
 }
 
@@ -45,7 +46,10 @@ function removeMap(tabId, windowId) {
 }
 
 function addPanner(tabId, stream) {
-	const panner = context.createStereoPanner();
+	const panner = context.createPanner();
+	panner.panningModel = 'HRTF';
+	panner.rolloffFactor = 1 / Math.max(center_x, center_y);
+
 	context.createMediaStreamSource(stream).connect(panner);
 	panner.connect(context.destination);
 
@@ -59,6 +63,7 @@ function removePanner(tabId) {
 chrome.system.display.getInfo({}, displayInfo => {
 	const bounds = displayInfo[0].bounds;
 	center_x = (bounds.width - bounds.left) / 2;
+	center_y = (bounds.height - bounds.top) / 2;
 });
 
 chrome.windows.onBoundsChanged.addListener(window => {
@@ -79,57 +84,27 @@ chrome.contextMenus.create({
 chrome.contextMenus.onClicked.addListener((info, tab) => {
 	addMap(tab.id, tab.windowId);
 	capture(tab.id, tab.windowId);
-
-	//log('contextMenus.onClicked: ' + tab.id);
 });
 
 chrome.browserAction.onClicked.addListener(tab => {
 	addMap(tab.id, tab.windowId);
 	capture(tab.id, tab.windowId);
-
-	//log('browserAction.onClicked: ' + tab.id);
 });
 
 chrome.tabs.onAttached.addListener((tabId, attachInfo) => {
 	addMap(tabId, attachInfo.newWindowId);
 	capture(tabId, attachInfo.newWindowId);
-
-	//log('tabs.onAttached: ' + tabId);
 });
 
 chrome.tabs.onDetached.addListener((tabId, detachInfo) => {
 	removeMap(tabId, detachInfo.oldWindowId);
-
-	//log('tabs.onDetached: ' + tabId);
 });
 
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
 	removeMap(tabId, removeInfo.windowId);
 	removePanner(tabId);
-
-	//log('tabs.onRemoved: ' + tabId);
 });
 
 chrome.windows.onRemoved.addListener(windowId => {
 	removeMap(undefined, windowId);
-
-	//log('windows.onRemoved: ' + windowId);
 });
-
-function log(title) {
-	setTimeout(() => {
-		console.log(title);
-		console.log('tabId_to_panner: ');
-		tabId_to_panner.forEach((value, key, map) => console.log('\t' + key + ': ' + value));
-		console.log('windowId_to_tabId: ');
-		windowId_to_tabId.forEach((value, key, map) => console.log('\t' + key + ': ' + join(value)));
-	}, 1000);
-}
-
-function join(value) {
-	if (value) {
-		return '[' + Array.from(value).join(',') + ']';
-	} else {
-		return '[]';
-	}
-}
