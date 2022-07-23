@@ -6,14 +6,14 @@ let tabId_to_panner = new Map();
 let windowId_to_tabId = new Map();
 const context = new AudioContext();
 
-function capture(tabId, windowId) {
+function capture(tabId, windowId, type = 'StereoPan') {
 	if (tabId_to_panner.has(tabId)) {
-		pan(tabId, windowId);
+		pan(tabId, windowId, type);
 	} else {
 		chrome.tabCapture.capture({ audio: true, video: false }, (stream) => {
 			if (stream) {
-				addPanner(tabId, stream);
-				pan(tabId, windowId);
+				addPanner(tabId, stream, type);
+				pan(tabId, windowId, type);
 			} else {
 				console.log('Chrome pages cannot be captured.');
 			}
@@ -21,7 +21,7 @@ function capture(tabId, windowId) {
 	}
 }
 
-function pan(tabId, windowId, type = 'StereoPan') {
+function pan(tabId, windowId, type) {
 	chrome.windows.get(windowId, window => {
 		const panner = tabId_to_panner.get(tabId);
 		switch (type) {
