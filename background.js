@@ -20,8 +20,9 @@ function capture(tabId, windowId) {
 function pan(tabId, windowId) {
 	chrome.windows.get(windowId, window => {
 		const panner = tabId_to_panner.get(tabId);
-		panner.positionX.value = window.left + window.width / 2 - center_x;
-		panner.positionY.value = -(window.top + window.height / 2 - center_y);
+		panner.positionX.value = (window.left + window.width / 2 - center_x) / center_x * 2;
+		panner.positionY.value = -(window.top + window.height / 2 - center_y) / center_y * 2;
+		panner.positionZ.value = 1;
 	});
 }
 
@@ -48,7 +49,7 @@ function removeMap(tabId, windowId) {
 function addPanner(tabId, stream) {
 	const panner = context.createPanner();
 	panner.panningModel = 'HRTF';
-	panner.rolloffFactor = 1 / center_x / center_y;
+	panner.rolloffFactor = 0.01;
 
 	context.createMediaStreamSource(stream).connect(panner);
 	panner.connect(context.destination);
