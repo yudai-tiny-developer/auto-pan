@@ -20,9 +20,9 @@ function capture(tabId, windowId) {
 function pan(tabId, windowId) {
 	chrome.windows.get(windowId, window => {
 		const panner = tabId_to_panner.get(tabId);
-		panner.positionX.setTargetAtTime((window.left + window.width / 2 - center_x) / center_x * 2, context.currentTime, 0.2);
-		panner.positionY.setTargetAtTime(-(window.top + window.height / 2 - center_y) / center_y * 2, context.currentTime, 0.2);
-		panner.positionZ.setTargetAtTime(-1, context.currentTime, 0.2);
+		panner.positionX.setTargetAtTime((window.left + window.width / 2 - center_x) / center_x * 4, context.currentTime, 0.2);
+		panner.positionY.setTargetAtTime(-(window.top + window.height / 2 - center_y) / center_y * 8, context.currentTime, 0.2);
+		panner.positionZ.value = -1;
 	});
 }
 
@@ -49,7 +49,7 @@ function removeMap(tabId, windowId) {
 function addPanner(tabId, stream) {
 	const panner = context.createPanner();
 	panner.panningModel = 'HRTF';
-	panner.rolloffFactor = 0.01;
+	panner.rolloffFactor = 0.001;
 
 	context.createMediaStreamSource(stream).connect(panner);
 	panner.connect(context.destination);
