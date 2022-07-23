@@ -22,7 +22,7 @@ function pan(tabId, windowId) {
 		const panner = tabId_to_panner.get(tabId);
 		panner.positionX.value = (window.left + window.width / 2 - center_x) / center_x * 2;
 		panner.positionY.value = -(window.top + window.height / 2 - center_y) / center_y * 2;
-		panner.positionZ.value = 1;
+		panner.positionZ.value = -1;
 	});
 }
 
