@@ -17,12 +17,19 @@ function capture(tabId, windowId) {
 	}
 }
 
-function pan(tabId, windowId) {
+function pan(tabId, windowId, type = 'StereoPan') {
 	chrome.windows.get(windowId, window => {
 		const panner = tabId_to_panner.get(tabId);
-		panner.positionX.setTargetAtTime((window.left + window.width / 2 - center_x) / center_x * 4, context.currentTime, 0.2);
-		panner.positionY.setTargetAtTime(-(window.top + window.height / 2 - center_y) / center_y * 8, context.currentTime, 0.2);
-		panner.positionZ.value = -1;
+		switch (type) {
+			case 'Pan':
+				panner.positionX.setTargetAtTime((window.left + window.width / 2 - center_x) / center_x * 4, context.currentTime, 0.2);
+				panner.positionY.setTargetAtTime(-(window.top + window.height / 2 - center_y) / center_y * 8, context.currentTime, 0.2);
+				panner.positionZ.value = -1;
+				break;
+			case 'StereoPan':
+				panner.pan.setTargetAtTime(Math.min(1, Math.max(-1, (window.left + window.width / 2 - center_x) / center_x)), context.currentTime, 0.2);
+				break;
+		}
 	});
 }
 
@@ -46,10 +53,18 @@ function removeMap(tabId, windowId) {
 	}
 }
 
-function addPanner(tabId, stream) {
-	const panner = context.createPanner();
-	panner.panningModel = 'HRTF';
-	panner.rolloffFactor = 0.001;
+function addPanner(tabId, stream, type = 'StereoPan') {
+	let panner;
+	switch (type) {
+		case 'Pan':
+			panner = context.createPanner();
+			panner.panningModel = 'HRTF';
+			panner.rolloffFactor = 0.001;
+			break;
+		case 'StereoPan':
+			panner = context.createStereoPanner();
+			break;
+	}
 
 	context.createMediaStreamSource(stream).connect(panner);
 	panner.connect(context.destination);
