@@ -22,12 +22,12 @@ function pan(tabId, windowId, type) {
 		const audio = tabId_to_audio.get(tabId);
 		switch (type) {
 			case 'Pan':
-				audio.panner.positionX.setTargetAtTime((window.left + window.width / 2 - center_x) / center_x * 1.35, context.currentTime, 0.2);
-				audio.panner.positionY.setTargetAtTime(-(window.top + window.height / 2 - center_y) / center_y * 2.7, context.currentTime, 0.2);
+				audio.panner.positionX.setTargetAtTime((window.left + window.width / 2 - center_x) / center_x * 1.3, context.currentTime, 0.2);
+				audio.panner.positionY.setTargetAtTime(-(window.top + window.height / 2 - center_y) / center_y * 2.6, context.currentTime, 0.2);
 				audio.panner.positionZ.setTargetAtTime(-1, context.currentTime, 0.2);
 				break;
 			case 'StereoPan':
-				audio.panner.pan.setTargetAtTime(Math.min(1, Math.max(-1, (window.left + window.width / 2 - center_x) / center_x) * 1.35), context.currentTime, 0.2);
+				audio.panner.pan.setTargetAtTime(Math.min(1, Math.max(-1, (window.left + window.width / 2 - center_x) / center_x) * 1.3), context.currentTime, 0.2);
 				break;
 		}
 	});
