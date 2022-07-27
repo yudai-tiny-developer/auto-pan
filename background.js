@@ -22,9 +22,9 @@ function pan(tabId, windowId, type) {
 		const audio = tabId_to_audio.get(tabId);
 		switch (type) {
 			case 'Pan':
-				audio.panner.positionX.setTargetAtTime((window.left + window.width / 2 - center_x) / center_x * 4, context.currentTime, 0.2);
-				audio.panner.positionY.setTargetAtTime(-(window.top + window.height / 2 - center_y) / center_y * 8, context.currentTime, 0.2);
-				audio.panner.positionZ.value = -1;
+				audio.panner.positionX.setTargetAtTime((window.left + window.width / 2 - center_x) / center_x * 1.4, context.currentTime, 0.2);
+				audio.panner.positionY.setTargetAtTime(-(window.top + window.height / 2 - center_y) / center_y * 2.8, context.currentTime, 0.2);
+				audio.panner.positionZ.setTargetAtTime(-1, context.currentTime, 0.2);
 				break;
 			case 'StereoPan':
 				audio.panner.pan.setTargetAtTime(Math.min(1, Math.max(-1, (window.left + window.width / 2 - center_x) / center_x) * 1.4), context.currentTime, 0.2);
@@ -53,13 +53,13 @@ function removeMap(tabId, windowId) {
 	}
 }
 
-function addAudio(tabId, stream, type = 'StereoPan') {
+function addAudio(tabId, stream, type) {
 	let panner;
 	switch (type) {
 		case 'Pan':
 			panner = context.createPanner();
 			panner.panningModel = 'HRTF';
-			panner.rolloffFactor = 0.001;
+			panner.distanceModel = 'linear';
 			break;
 		case 'StereoPan':
 			panner = context.createStereoPanner();
