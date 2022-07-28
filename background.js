@@ -105,7 +105,7 @@ chrome.contextMenus.create({
 	id: 'hkghcgebakholhmhijhpipamdmbcnbgj',
 	title: 'Auto Pan',
 	type: 'normal',
-	contexts: ['page', 'frame', 'image', 'video']
+	contexts: ['page', 'video']
 }, () => { });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
