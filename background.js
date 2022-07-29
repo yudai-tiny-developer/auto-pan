@@ -27,7 +27,7 @@ function pan(tabId, windowId, type) {
 				audio.panner.positionZ.setTargetAtTime(-1, context.currentTime, 0.2);
 				break;
 			case 'StereoPan':
-				audio.panner.pan.setTargetAtTime(Math.min(1, Math.max(-1, (window.left + window.width / 2 - center_x) / center_x) * 1.3), context.currentTime, 0.2);
+				audio.panner.pan.setTargetAtTime(Math.min(1, Math.max(-1, (window.left + window.width / 2 - center_x) / center_x * 1.3)), context.currentTime, 0.2);
 				break;
 		}
 	});
