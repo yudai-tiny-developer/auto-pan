@@ -94,7 +94,7 @@ chrome.system.display.getInfo({}, displayInfo => {
 });
 
 chrome.windows.onBoundsChanged.addListener(window => {
-	if (windowId_to_tabId.has(window.id)) {
+	if (window.state !== 'minimized' && windowId_to_tabId.has(window.id)) {
 		for (const tabId of windowId_to_tabId.get(window.id)) {
 			capture(tabId, window.id, false);
 		}
