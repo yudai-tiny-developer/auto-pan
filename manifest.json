@@ -1,20 +1,18 @@
 {
-   "manifest_version": 2,
-   "name": "Auto Pan",
-   "version": "1.0.0",
-   "description": "Auto Pan",
-   "background": {
-      "scripts": [
-         "background.js"
-      ],
-      "persistent": true
-   },
-   "browser_action": {},
-   "permissions": [
-      "contextMenus",
-      "tabs",
-      "activeTab",
-      "tabCapture",
-      "system.display"
-   ]
+    "manifest_version": 3,
+    "name": "Auto Pan",
+    "version": "1.0.0",
+    "description": "__MSG_appDesc__",
+    "default_locale": "en",
+    "content_scripts": [
+        {
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_end",
+            "matches": [
+                "*://*/*"
+            ]
+        }
+    ]
 }
