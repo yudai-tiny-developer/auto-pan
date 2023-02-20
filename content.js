@@ -1,15 +1,10 @@
 import(chrome.runtime.getURL('common.js')).then(common => {
     let context;
     let panner;
-    let source;
     let enabled = true;
     let panRate = common.defaultPanRate;
 
     function updatePan() {
-        if (!source) {
-            connectPan(document.querySelector('video, audio'));
-        }
-
         if (panner && notMinimized()) {
             if (enabled) {
                 const center_x = window.screen.width / 2;
@@ -21,19 +16,17 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     }
 
     function connectPan(media) {
-        if (media) {
-            if (!context) {
-                context = new AudioContext();
-            }
-
-            if (!panner) {
-                panner = context.createStereoPanner();
-                panner.connect(context.destination);
-            }
-
-            source = new MediaElementAudioSourceNode(context, { mediaElement: media });
-            source.connect(panner);
+        if (!context) {
+            context = new AudioContext();
         }
+
+        if (!panner) {
+            panner = context.createStereoPanner();
+            panner.connect(context.destination);
+        }
+
+        const source = new MediaElementAudioSourceNode(context, { mediaElement: media });
+        source.connect(panner);
     }
 
     function notMinimized() {
@@ -41,9 +34,13 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     }
 
     let screenX = window.screenX;
+    let outerWidth = window.outerWidth;
+    let width = window.screen.width;
     setInterval(() => {
-        if (!source || screenX !== window.screenX) {
+        if (screenX !== window.screenX || outerWidth !== window.outerWidth || width !== window.screen.width) {
             screenX = window.screenX;
+            outerWidth = window.outerWidth;
+            width = window.screen.width;
             updatePan();
         }
     }, 500);
@@ -55,11 +52,27 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     });
 
     chrome.storage.onChanged.addListener((changes, namespace) => {
-        console.log('onChanged');
         chrome.storage.local.get(['enabled', 'panRate'], data => {
             enabled = data.enabled;
             panRate = common.limitPanRate(data.panRate);
             updatePan();
         });
     });
+
+    new MutationObserver((mutations, observer) => {
+        for (const m of mutations) {
+            for (const n of m.addedNodes) {
+                if (n.nodeName === 'VIDEO' || n.nodeName === 'AUDIO') {
+                    connectPan(n);
+                }
+            }
+        }
+    }).observe(document, {
+        childList: true,
+        subtree: true,
+    });
+
+    for (const media of document.querySelectorAll('video, audio')) {
+        connectPan(media);
+    }
 });
