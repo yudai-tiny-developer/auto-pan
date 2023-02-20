@@ -1,9 +1,14 @@
 {
     "manifest_version": 3,
-    "name": "Auto Pan",
+    "name": "Auto Pan by Window Position",
     "version": "1.0.0",
     "description": "__MSG_appDesc__",
     "default_locale": "en",
+    "icons": {
+        "16": "icons/16.png",
+        "48": "icons/48.png",
+        "128": "icons/128.png"
+    },
     "content_scripts": [
         {
             "js": [
@@ -14,5 +19,21 @@
                 "*://*/*"
             ]
         }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "common.js"
+            ],
+            "matches": [
+                "*://www.youtube.com/*"
+            ]
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "permissions": [
+        "storage"
     ]
 }

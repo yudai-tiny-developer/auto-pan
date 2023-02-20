@@ -1,5 +1,5 @@
 {
     "appDesc": {
-        "message": "Auto Pan"
+        "message": "Controls panning so that if the window is to the left of the center of the display, the sound will come from the left, and if it is to the right of the center of the display, the sound will come from the right."
     }
 }

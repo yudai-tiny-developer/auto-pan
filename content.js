@@ -1,65 +1,61 @@
-let context;
-let panner;
-let source;
+import(chrome.runtime.getURL('common.js')).then(common => {
+    let context;
+    let panner;
+    let source;
+    let enabled = true;
+    let panRate = common.defaultPanRate;
 
-function updatePan() {
-    if (panner) {
-        const center_x = window.screen.width / 2;
-        const target = Math.min(1, Math.max(-1, (window.screenX + window.outerWidth / 2 - center_x) / center_x * 2.0));
-        panner.pan.setTargetAtTime(target, context.currentTime, 0.2);
-    }
-}
-
-function connectPan(media) {
-    media.addEventListener('playing', () => {
-        if (!context) {
-            context = new AudioContext();
+    function updatePan() {
+        if (!source) {
+            connectPan(document.querySelector('video, audio'));
         }
 
-        if (!panner) {
-            panner = context.createStereoPanner();
-            panner.connect(context.destination);
-        }
-
-        source = context.createMediaStreamSource(media.captureStream());
-        source.connect(panner);
-
-        updatePan();
-    });
-}
-
-window.addEventListener('resize', () => {
-    updatePan();
-});
-
-let screenX = window.screenX;
-setInterval(() => {
-    if (screenX !== window.screenX) {
-        screenX = window.screenX;
-        updatePan();
-    }
-}, 256);
-
-new MutationObserver((mutations, observer) => {
-    for (const m of mutations) {
-        if (m.target.nodeName === 'VIDEO' || m.target.nodeName === 'AUDIO') {
-            connectPan(m.target);
-            return;
-        }
-
-        for (const n of m.addedNodes) {
-            if (n.nodeName === 'VIDEO' || n.nodeName === 'AUDIO') {
-                connectPan(n);
-                return;
+        if (panner) {
+            if (enabled) {
+                const center_x = window.screen.width / 2;
+                panner.pan.value = Math.min(1, Math.max(-1, (window.screenX + window.outerWidth / 2 - center_x) / center_x * panRate));
+            } else {
+                panner.pan.value = 0;
             }
         }
     }
-}).observe(document.body, {
-    childList: true,
-    subtree: true,
-});
 
-const media = document.querySelector('video, audio');
-if (media) {
-    connectPan(media);
-}
+    function connectPan(media) {
+        if (media) {
+            if (!context) {
+                context = new AudioContext();
+            }
+
+            if (!panner) {
+                panner = context.createStereoPanner();
+                panner.connect(context.destination);
+            }
+
+            source = new MediaElementAudioSourceNode(context, { mediaElement: media });
+            source.connect(panner);
+        }
+    }
+
+    let screenX = window.screenX;
+    setInterval(() => {
+        if (!source || screenX !== window.screenX) {
+            screenX = window.screenX;
+            updatePan();
+        }
+    }, 500);
+
+    chrome.storage.local.get(['enabled', 'panRate'], data => {
+        enabled = data.enabled;
+        panRate = common.limitPanRate(data.panRate);
+        updatePan();
+    });
+
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+        console.log('onChanged');
+        chrome.storage.local.get(['enabled', 'panRate'], data => {
+            enabled = data.enabled;
+            panRate = common.limitPanRate(data.panRate);
+            updatePan();
+        });
+    });
+});
