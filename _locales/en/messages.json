@@ -1,0 +1,5 @@
+{
+    "appDesc": {
+        "message": "Controls panning so that if the window is to the left/right of the center of the display, the sound will come from the same side."
+    }
+}

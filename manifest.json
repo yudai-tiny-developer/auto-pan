@@ -1,20 +1,39 @@
 {
-   "manifest_version": 2,
-   "name": "Auto Pan",
-   "version": "1.0.0",
-   "description": "Auto Pan",
-   "background": {
-      "scripts": [
-         "background.js"
-      ],
-      "persistent": true
-   },
-   "browser_action": {},
-   "permissions": [
-      "contextMenus",
-      "tabs",
-      "activeTab",
-      "tabCapture",
-      "system.display"
-   ]
+    "manifest_version": 3,
+    "name": "Auto Pan by Window Position",
+    "version": "1.0.0",
+    "description": "__MSG_appDesc__",
+    "default_locale": "en",
+    "icons": {
+        "16": "icons/16.png",
+        "48": "icons/48.png",
+        "128": "icons/128.png"
+    },
+    "content_scripts": [
+        {
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_end",
+            "matches": [
+                "*://*/*"
+            ]
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "common.js"
+            ],
+            "matches": [
+                "*://www.youtube.com/*"
+            ]
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "permissions": [
+        "storage"
+    ]
 }
