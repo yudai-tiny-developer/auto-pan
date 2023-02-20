@@ -10,7 +10,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             connectPan(document.querySelector('video, audio'));
         }
 
-        if (panner) {
+        if (panner && notMinimized()) {
             if (enabled) {
                 const center_x = window.screen.width / 2;
                 panner.pan.value = Math.min(1, Math.max(-1, (window.screenX + window.outerWidth / 2 - center_x) / center_x * panRate));
@@ -34,6 +34,10 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             source = new MediaElementAudioSourceNode(context, { mediaElement: media });
             source.connect(panner);
         }
+    }
+
+    function notMinimized() {
+        return window.screenX > -32000;
     }
 
     let screenX = window.screenX;
