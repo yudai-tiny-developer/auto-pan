@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Auto Pan by Window Position for YouTube",
-    "version": "1.0.5",
+    "version": "1.1.0",
     "description": "__MSG_appDesc__",
     "default_locale": "en",
     "icons": {
@@ -20,6 +20,9 @@
             ]
         }
     ],
+    "background": {
+        "service_worker": "background.js"
+    },
     "web_accessible_resources": [
         {
             "resources": [

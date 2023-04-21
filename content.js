@@ -30,7 +30,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     }
 
     function notMinimized() {
-        return window.screenX > -32000;
+        return window.screenX > -21333;
     }
 
     let screenX = window.screenX;
