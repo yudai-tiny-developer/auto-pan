@@ -5,10 +5,14 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     let panRate = common.defaultPanRate;
 
     function updatePan() {
-        if (panner && notMinimized()) {
+        if (panner) {
             if (enabled) {
-                const center_x = window.screen.width / 2;
-                panner.pan.value = Math.min(1, Math.max(-1, (window.screenX + window.outerWidth / 2 - center_x) / center_x * panRate));
+                chrome.runtime.sendMessage('GetCurrentWindow').then(response => {
+                    if (response.state !== 'minimized') {
+                        const center_x = window.screen.width / 2;
+                        panner.pan.value = Math.min(1, Math.max(-1, (window.screenX + window.outerWidth / 2 - center_x) / center_x * panRate));
+                    }
+                }).catch(error => { });
             } else {
                 panner.pan.value = 0;
             }
@@ -18,32 +22,30 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     function connectPan(media) {
         if (!context) {
             context = new AudioContext();
-        }
 
-        if (!panner) {
-            panner = context.createStereoPanner();
-            panner.connect(context.destination);
-        }
+            const timer = setInterval(() => {
+                if (context.state === 'suspended') {
+                    context.resume();
+                } else {
+                    clearInterval(timer);
 
-        const source = new MediaElementAudioSourceNode(context, { mediaElement: media });
-        source.connect(panner);
+                    if (!panner) {
+                        panner = context.createStereoPanner();
+                        panner.connect(context.destination);
+                    }
+
+                    const source = new MediaElementAudioSourceNode(context, { mediaElement: media });
+                    source.connect(panner);
+
+                    updatePan();
+                }
+            }, 100);
+        }
     }
 
-    function notMinimized() {
-        return window.screenX > -21333;
-    }
-
-    let screenX = window.screenX;
-    let outerWidth = window.outerWidth;
-    let width = window.screen.width;
-    setInterval(() => {
-        if (screenX !== window.screenX || outerWidth !== window.outerWidth || width !== window.screen.width) {
-            screenX = window.screenX;
-            outerWidth = window.outerWidth;
-            width = window.screen.width;
-            updatePan();
-        }
-    }, 500);
+    chrome.runtime.onMessage.addListener(w => {
+        updatePan();
+    });
 
     chrome.storage.local.get(['enabled', 'panRate'], data => {
         enabled = data.enabled;
