@@ -6,7 +6,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
     function updatePan() {
         if (panner) {
-            if (enabled) {
+            if (enabled !== false) {
                 chrome.runtime.sendMessage('GetCurrentWindow').then(response => {
                     if (response.state !== 'minimized') {
                         const center_x = window.screen.width / 2;
