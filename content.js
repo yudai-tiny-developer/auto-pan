@@ -25,6 +25,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
             const timer = setInterval(() => {
                 if (context.state === 'suspended') {
+                    console.log('Resuming attempt.');
                     context.resume();
                 } else {
                     clearInterval(timer);
@@ -39,7 +40,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
                     updatePan();
                 }
-            }, 100);
+            }, 1000);
         }
     }
 
