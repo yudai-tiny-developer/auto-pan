@@ -10,7 +10,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                 chrome.runtime.sendMessage('GetCurrentWindow').then(response => {
                     if (response.state !== 'minimized') {
                         const center_x = window.screen.width / 2;
-                        panner.pan.value = Math.min(1, Math.max(-1, (window.screenX + window.outerWidth / 2 - center_x) / center_x * panRate));
+                        panner.pan.value = Math.min(1, Math.max(-1, (response.left + response.width / 2 - center_x) / center_x * panRate));
                     }
                 }).catch(error => { });
             } else {
