@@ -1,4 +1,5 @@
 import(chrome.runtime.getURL('common.js')).then(common => {
+    let connectPanTimer;
     let context;
     let panner;
     let enabled = true;
@@ -20,12 +21,14 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     }
 
     function connectPan(media) {
-        if (!context) {
-            context = new AudioContext();
+        clearTimeout(connectPanTimer);
+        connectPanTimer = setTimeout(() => {
+            if (!context) {
+                context = new AudioContext();
+            }
 
             const timer = setInterval(() => {
                 if (context.state === 'suspended') {
-                    console.log('Resuming attempt.');
                     context.resume();
                 } else {
                     clearInterval(timer);
@@ -35,13 +38,17 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                         panner.connect(context.destination);
                     }
 
-                    const source = new MediaElementAudioSourceNode(context, { mediaElement: media });
-                    source.connect(panner);
+                    try {
+                        const source = new MediaElementAudioSourceNode(context, { mediaElement: media });
+                        source.connect(panner);
+                    } catch {
+                        // already connected
+                    }
 
                     updatePan();
                 }
-            }, 1000);
-        }
+            }, 100);
+        }, 100);
     }
 
     chrome.runtime.onMessage.addListener(w => {
@@ -64,6 +71,10 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
     new MutationObserver((mutations, observer) => {
         for (const m of mutations) {
+            for (const media of m.target.querySelectorAll('video, audio')) {
+                connectPan(media);
+            }
+
             for (const n of m.addedNodes) {
                 if (n.nodeName === 'VIDEO' || n.nodeName === 'AUDIO') {
                     connectPan(n);
