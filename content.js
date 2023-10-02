@@ -40,13 +40,11 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                             panner.connect(context.destination);
                         }
 
-                        if (sourceMedia !== media) {
+                        if (sourceMedia !== media && checkForCORS(media)) {
                             try {
                                 sourceMedia = media;
-                                if (checkForCORS(media)) {
-                                    const source = context.createMediaElementSource(media);
-                                    source.connect(panner);
-                                }
+                                const source = context.createMediaElementSource(media);
+                                source.connect(panner);
                             } catch {
                                 // already connected
                             }
