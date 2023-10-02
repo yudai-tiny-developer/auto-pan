@@ -43,8 +43,10 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                         if (sourceMedia !== media) {
                             try {
                                 sourceMedia = media;
-                                const source = context.createMediaElementSource(media);
-                                source.connect(panner);
+                                if (checkForCORS(media)) {
+                                    const source = context.createMediaElementSource(media);
+                                    source.connect(panner);
+                                }
                             } catch {
                                 // already connected
                             }
@@ -56,6 +58,20 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         } else {
             panner.pan.value = 0;
         }
+    }
+
+    function checkForCORS(media) {
+        if (media.srcObject) {
+            return true;
+        } else {
+            const regexp = new RegExp('\/\/' + window.location.hostname);
+            if (media.src && media.src.match(regexp)) {
+                return true;
+            } else if (media.currentSrc && media.currentSrc.match(regexp)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     chrome.runtime.onMessage.addListener(() => {
