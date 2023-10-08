@@ -4,6 +4,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     let panner;
     let enabled = true;
     let panRate = common.defaultPanRate;
+    let sourceMedia;
 
     function updatePan() {
         if (panner) {
@@ -21,55 +22,81 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     }
 
     function connectPan(media) {
-        clearTimeout(connectPanTimer);
-        connectPanTimer = setTimeout(() => {
-            if (!context) {
-                context = new AudioContext();
-            }
-
-            const timer = setInterval(() => {
-                if (context.state === 'suspended') {
-                    context.resume();
-                } else {
-                    clearInterval(timer);
-
-                    if (!panner) {
-                        panner = context.createStereoPanner();
-                        panner.connect(context.destination);
-                    }
-
-                    try {
-                        const source = new MediaElementAudioSourceNode(context, { mediaElement: media });
-                        source.connect(panner);
-                    } catch {
-                        // already connected
-                    }
-
-                    updatePan();
+        if (enabled !== false) {
+            clearTimeout(connectPanTimer);
+            connectPanTimer = setTimeout(() => {
+                if (!context) {
+                    context = new AudioContext();
                 }
+
+                const timer = setInterval(() => {
+                    if (context.state === 'suspended') {
+                        context.resume();
+                    } else {
+                        clearInterval(timer);
+
+                        if (!panner) {
+                            panner = context.createStereoPanner();
+                            panner.connect(context.destination);
+                        }
+
+                        if (sourceMedia !== media && checkForCORS(media)) {
+                            try {
+                                sourceMedia = media;
+                                const source = context.createMediaElementSource(media);
+                                source.connect(panner);
+                            } catch {
+                                // already connected
+                            }
+                        }
+                        updatePan();
+                    }
+                }, 100);
             }, 100);
-        }, 100);
+        } else {
+            panner.pan.value = 0;
+        }
     }
 
-    chrome.runtime.onMessage.addListener(w => {
+    function checkForCORS(media) {
+        if (media.srcObject) {
+            return true;
+        } else {
+            const regexp = new RegExp('\/\/' + window.location.hostname);
+            if (media.src && media.src.match(regexp)) {
+                return true;
+            } else if (media.currentSrc && media.currentSrc.match(regexp)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    chrome.runtime.onMessage.addListener(() => {
         updatePan();
     });
 
     chrome.storage.local.get(['enabled', 'panRate'], data => {
         enabled = data.enabled;
         panRate = common.limitPanRate(data.panRate);
-        updatePan();
+
+        for (const media of document.querySelectorAll('video, audio')) {
+            connectPan(media);
+        }
     });
 
-    chrome.storage.onChanged.addListener((changes, namespace) => {
+    chrome.storage.onChanged.addListener(() => {
         chrome.storage.local.get(['enabled', 'panRate'], data => {
             enabled = data.enabled;
             panRate = common.limitPanRate(data.panRate);
-            updatePan();
+
+            for (const media of document.querySelectorAll('video, audio')) {
+                connectPan(media);
+            }
         });
     });
 
-    new MutationObserver((mutations, observer) => {
+    new MutationObserver(mutations => {
         for (const m of mutations) {
             for (const media of m.target.querySelectorAll('video, audio')) {
                 connectPan(media);
@@ -85,8 +112,4 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         childList: true,
         subtree: true,
     });
-
-    for (const media of document.querySelectorAll('video, audio')) {
-        connectPan(media);
-    }
 });
