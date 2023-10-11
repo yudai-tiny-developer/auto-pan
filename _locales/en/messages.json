@@ -1,5 +1,5 @@
 {
     "appDesc": {
-        "message": "Controls panning so that if the window is to the left/right of the center of the display, the sound will come from the same side."
+        "message": "This extension controls audio panning, enabling sound to be heard from the left when the window is positioned to the left of the display's center and from the right when it's on the right side. Due to the Manifest V3 specification, it may not function on sites with CORS configured."
     }
 }
