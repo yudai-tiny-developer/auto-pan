@@ -54,7 +54,9 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                 }, 100);
             }, 100);
         } else {
-            panner.pan.value = 0;
+            if (panner) {
+                panner.pan.value = 0;
+            }
         }
     }
 
