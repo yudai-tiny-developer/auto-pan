@@ -2,12 +2,20 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     let connectPanTimer;
     let context;
     let panner;
-    let enabled = true;
+    let enabled = common.defaultEnabled;
     let panRate = common.defaultPanRate;
     let sourceMedia;
+    let smooth = common.defaultSmooth;
+    let smoothRate = common.defaultSmoothRate;
+    let smoothTimer;
 
     function updatePan() {
         if (panner) {
+            console.log(panner.pan.value);
+            if (smooth === false) {
+                clearInterval(smoothTimer);
+            }
+
             if (enabled !== false) {
                 chrome.runtime.sendMessage('GetCurrentWindow').then(response => {
                     if (response.state !== 'minimized') {
@@ -49,7 +57,17 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                                 // already connected
                             }
                         }
+
                         updatePan();
+
+                        if (smooth) {
+                            clearInterval(smoothTimer);
+                            smoothTimer = setInterval(() => {
+                                updatePan();
+                            }, smoothRate);
+                        } else {
+                            clearInterval(smoothTimer);
+                        }
                     }
                 }, 100);
             }, 100);
@@ -78,24 +96,23 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         updatePan();
     });
 
-    chrome.storage.local.get(['enabled', 'panRate'], data => {
-        enabled = data.enabled;
-        panRate = common.limitPanRate(data.panRate);
-
-        for (const media of document.querySelectorAll('video, audio')) {
-            connectPan(media);
-        }
-    });
-
-    chrome.storage.onChanged.addListener(() => {
-        chrome.storage.local.get(['enabled', 'panRate'], data => {
-            enabled = data.enabled;
-            panRate = common.limitPanRate(data.panRate);
+    function initSettings() {
+        chrome.storage.local.get(common.storage, data => {
+            enabled = data.enabled === undefined ? common.defaultEnabled : data.enabled;
+            panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
+            smooth = data.smooth === undefined ? common.defaultSmooth : data.smooth;
+            smoothRate = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
 
             for (const media of document.querySelectorAll('video, audio')) {
                 connectPan(media);
             }
         });
+    }
+
+    initSettings();
+
+    chrome.storage.onChanged.addListener(() => {
+        initSettings();
     });
 
     new MutationObserver(mutations => {
