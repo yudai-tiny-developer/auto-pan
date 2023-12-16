@@ -1,25 +1,35 @@
+export const storage = ['enabled', 'panRate', 'smooth', 'smoothRate'];
+
+export const defaultEnabled = true;
+
 export const defaultPanRate = 1.6;
 export const minPanRate = 0.0;
 export const maxPanRate = 2.0;
 export const stepPanRate = 0.1;
 
-export function limitPanRate(value) {
-    return step(range(normalize(value)));
+export const defaultSmooth = false;
+export const defaultSmoothRate = 250;
+export const minSmoothRate = 50;
+export const maxSmoothRate = 1000;
+export const stepSmoothRate = 50;
+
+export function limitRate(value, defaultValue, minRate, maxRate, stepRate) {
+    return step(range(normalize(value, defaultValue), minRate, maxRate), stepRate);
 }
 
 function isNumber(value) {
     return Number.isFinite(parseFloat(value));
 }
 
-function normalize(value) {
-    return isNumber(value) ? value : defaultPanRate;
+function normalize(value, defaultValue) {
+    return isNumber(value) ? value : defaultValue;
 }
 
-function range(value) {
-    return Math.min(Math.max(value, minPanRate), maxPanRate);
+function range(value, minRate, maxRate) {
+    return Math.min(Math.max(value, minRate), maxRate);
 }
 
-function step(value) {
-    const step = 1.0 / stepPanRate;
+function step(value, stepRate) {
+    const step = 1.0 / stepRate;
     return Math.round(value * step) / step;
 }

@@ -74,7 +74,7 @@ input.checkbox:checked+label.switch {
     background-color: rgb(235, 255, 229);
 }
 
-input#panRate {
+input.rate {
     display: table-cell;
     padding: 8px;
     width: 60px;
@@ -82,4 +82,10 @@ input#panRate {
 
 body {
     background-color: rgb(26, 26, 26);
+}
+
+div#reset_container {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px;
 }
