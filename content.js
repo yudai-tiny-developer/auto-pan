@@ -1,33 +1,33 @@
 import(chrome.runtime.getURL('common.js')).then(common => {
-    let connectPanTimer;
-    let context;
-    let panner;
     let enabled = common.defaultEnabled;
     let panRate = common.defaultPanRate;
-    let sourceMedia;
     let smooth = common.defaultSmooth;
     let smoothRate = common.defaultSmoothRate;
-    let smoothTimer;
 
-    function updatePan() {
-        if (panner) {
-            console.log(panner.pan.value);
-            if (smooth === false) {
-                clearInterval(smoothTimer);
-            }
+    function initSettings() {
+        chrome.storage.local.get(common.storage, data => {
+            enabled = data.enabled === undefined ? common.defaultEnabled : data.enabled;
+            panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
+            smooth = data.smooth === undefined ? common.defaultSmooth : data.smooth;
+            smoothRate = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
 
-            if (enabled !== false) {
-                chrome.runtime.sendMessage('GetCurrentWindow').then(response => {
-                    if (response.state !== 'minimized') {
-                        const center_x = window.screen.width / 2;
-                        panner.pan.value = Math.min(1, Math.max(-1, (response.left + response.width / 2 - center_x) / center_x * panRate));
-                    }
-                }).catch(error => { });
-            } else {
-                panner.pan.value = 0;
+            for (const media of document.querySelectorAll('video, audio')) {
+                connectPan(media);
             }
-        }
+        });
     }
+
+    initSettings();
+
+    chrome.storage.onChanged.addListener(() => {
+        initSettings();
+    });
+
+    let context;
+    let panner;
+    let sourceMedia;
+    let connectPanTimer;
+    let smoothTimer;
 
     function connectPan(media) {
         if (enabled !== false) {
@@ -78,6 +78,25 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         }
     }
 
+    function updatePan() {
+        if (panner) {
+            if (smooth === false) {
+                clearInterval(smoothTimer);
+            }
+
+            if (enabled !== false) {
+                chrome.runtime.sendMessage('GetCurrentWindow').then(response => {
+                    if (response.state !== 'minimized') {
+                        const center_x = window.screen.width / 2;
+                        panner.pan.value = Math.min(1, Math.max(-1, (response.left + response.width / 2 - center_x) / center_x * panRate));
+                    }
+                }).catch(error => { });
+            } else {
+                panner.pan.value = 0;
+            }
+        }
+    }
+
     function checkForCORS(media) {
         if (media.srcObject) {
             return true;
@@ -91,29 +110,6 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         }
         return false;
     }
-
-    chrome.runtime.onMessage.addListener(() => {
-        updatePan();
-    });
-
-    function initSettings() {
-        chrome.storage.local.get(common.storage, data => {
-            enabled = data.enabled === undefined ? common.defaultEnabled : data.enabled;
-            panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
-            smooth = data.smooth === undefined ? common.defaultSmooth : data.smooth;
-            smoothRate = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
-
-            for (const media of document.querySelectorAll('video, audio')) {
-                connectPan(media);
-            }
-        });
-    }
-
-    initSettings();
-
-    chrome.storage.onChanged.addListener(() => {
-        initSettings();
-    });
 
     new MutationObserver(mutations => {
         for (const m of mutations) {
@@ -130,5 +126,9 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     }).observe(document, {
         childList: true,
         subtree: true,
+    });
+
+    chrome.runtime.onMessage.addListener(() => {
+        updatePan();
     });
 });
