@@ -19,7 +19,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
         createRow(container, row => {
             row.appendChild(createLabel('Smooth panning (High CPU load)'));
-            row.appendChild(createToggle('enabled', data.smooth, common.defaultSmooth));
+            row.appendChild(createToggle('smooth', data.smooth, common.defaultSmooth));
         });
 
         createRow(container, row => {
@@ -70,12 +70,12 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         return cell;
     }
 
-    function createInput(value, defaultValue, minRate, maxRate, stepRate) {
+    function createInput(key, value, defaultValue, minRate, maxRate, stepRate) {
         const cell = document.createElement('div');
         cell.classList.add('cell');
 
         const input = document.createElement('input');
-        input.id = 'playbackRate';
+        input.id = key;
         input.classList.add('rate');
         input.type = 'number';
         input.value = common.limitRate(value, defaultValue, minRate, maxRate, stepRate);
@@ -84,7 +84,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         input.max = maxRate;
         input.step = stepRate;
         input.addEventListener('change', () => {
-            chrome.storage.local.set({ 'playbackRate': common.limitRate(input.value, defaultValue, minRate, maxRate, stepRate) });
+            chrome.storage.local.set({ [key]: common.limitRate(input.value, defaultValue, minRate, maxRate, stepRate) });
         });
         cell.appendChild(input);
 
