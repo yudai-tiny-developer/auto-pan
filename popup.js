@@ -18,6 +18,11 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         });
 
         createRow(container, row => {
+            row.appendChild(createLabel('Use vertical'));
+            row.appendChild(createToggle('pan2d', data.pan2d, common.defaultpPan2d));
+        });
+
+        createRow(container, row => {
             row.appendChild(createLabel('Smooth panning (High CPU load)'));
             row.appendChild(createToggle('smooth', data.smooth, common.defaultSmooth));
         });
