@@ -1,6 +1,7 @@
 import(chrome.runtime.getURL('common.js')).then(common => {
     let enabled = common.defaultEnabled;
     let panRate = common.defaultPanRate;
+    let pan2d = common.defaultPan2d;
     let smooth = common.defaultSmooth;
     let smoothRate = common.defaultSmoothRate;
 
@@ -8,6 +9,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         chrome.storage.local.get(common.storage, data => {
             enabled = data.enabled === undefined ? common.defaultEnabled : data.enabled;
             panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
+            pan2d = data.pan2d === undefined ? common.defaultPan2d : data.pan2d;
             smooth = data.smooth === undefined ? common.defaultSmooth : data.smooth;
             smoothRate = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
 
@@ -26,6 +28,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     let context;
     let panner;
     let sourceMedia;
+    let source;
     let connectPanTimer;
     let smoothTimer;
 
@@ -44,14 +47,34 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                         clearInterval(timer);
 
                         if (!panner) {
-                            panner = context.createStereoPanner();
+                            if (pan2d) {
+                                panner = context.createPanner();
+                                panner.panningModel = 'HRTF';
+                            } else {
+                                panner = context.createStereoPanner();
+                            }
                             panner.connect(context.destination);
+                        } else {
+                            if (pan2d && panner.pan && source) {
+                                panner.disconnect();
+                                panner = context.createPanner();
+                                panner.panningModel = 'HRTF';
+                                panner.connect(context.destination);
+                                source.connect(panner);
+                            } else if (!pan2d && panner.positionX && source) {
+                                panner.disconnect();
+                                panner = context.createStereoPanner();
+                                panner.connect(context.destination);
+                                source.connect(panner);
+                            } else {
+                                // already created
+                            }
                         }
 
                         if (sourceMedia !== media && checkForCORS(media)) {
                             try {
                                 sourceMedia = media;
-                                const source = context.createMediaElementSource(media);
+                                source = context.createMediaElementSource(media);
                                 source.connect(panner);
                             } catch {
                                 // already connected
@@ -73,7 +96,13 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             }, 100);
         } else {
             if (panner) {
-                panner.pan.value = 0;
+                if (pan2d) {
+                    panner.positionX.value = 0;
+                    panner.positionY.value = 0;
+                    panner.positionZ.value = 1.0;
+                } else {
+                    panner.pan.value = 0;
+                }
             }
         }
     }
@@ -88,11 +117,24 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                 chrome.runtime.sendMessage('GetCurrentWindow').then(response => {
                     if (response.state !== 'minimized') {
                         const center_x = window.screen.width / 2;
-                        panner.pan.value = Math.min(1, Math.max(-1, (response.left + response.width / 2 - center_x) / center_x * panRate));
+                        if (pan2d) {
+                            const center_y = window.screen.height / 2;
+                            const s = Math.min(1, Math.max(-1, (response.left + response.width / 2 - center_x) / center_x * panRate));
+                            const t = Math.min(1, Math.max(-1, (response.top + response.height / 2 - center_y) / center_y * panRate));
+                            [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0, 0, 1.0], s), t);
+                        } else {
+                            panner.pan.value = Math.min(1, Math.max(-1, (response.left + response.width / 2 - center_x) / center_x * panRate));
+                        }
                     }
                 }).catch(error => { });
             } else {
-                panner.pan.value = 0;
+                if (pan2d) {
+                    panner.positionX.value = 0;
+                    panner.positionY.value = 0;
+                    panner.positionZ.value = 1.0;
+                } else {
+                    panner.pan.value = 0;
+                }
             }
         }
     }
@@ -109,6 +151,14 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             }
         }
         return false;
+    }
+
+    function rotateX(p, s) {
+        return [p[0], p[1] * Math.cos(s) - p[2] * Math.sin(s), p[1] * Math.sin(s) + p[2] * Math.cos(s)];
+    }
+
+    function rotateY(p, s) {
+        return [p[0] * Math.cos(s) + p[2] * Math.sin(s), p[1], p[2] * Math.cos(s) - p[0] * Math.sin(s)];
     }
 
     new MutationObserver(mutations => {
