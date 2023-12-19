@@ -18,13 +18,8 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         });
 
         createRow(container, row => {
-            row.appendChild(createLabel('2D Pan'));
+            row.appendChild(createLabel('Use vertical'));
             row.appendChild(createToggle('pan2d', data.pan2d, common.defaultpPan2d));
-        });
-
-        createRow(container, row => {
-            row.appendChild(createLabel());
-            row.appendChild(createLabel('Reflecting the vertical position of the window if enabled.'));
         });
 
         createRow(container, row => {
