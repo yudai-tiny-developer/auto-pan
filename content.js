@@ -55,6 +55,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                             }
                             panner.connect(context.destination);
                         } else {
+                            // reconnect if panner changed
                             if (pan2d && panner.pan && source) {
                                 panner.disconnect();
                                 panner = context.createPanner();
@@ -67,7 +68,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                                 panner.connect(context.destination);
                                 source.connect(panner);
                             } else {
-                                // already created
+                                // already connected
                             }
                         }
 
@@ -96,13 +97,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             }, 100);
         } else {
             if (panner) {
-                if (pan2d) {
-                    panner.positionX.value = 0;
-                    panner.positionY.value = 0;
-                    panner.positionZ.value = 1.0;
-                } else {
-                    panner.pan.value = 0;
-                }
+                resetPan(panner);
             }
         }
     }
@@ -119,22 +114,16 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                         const center_x = window.screen.width / 2;
                         if (pan2d) {
                             const center_y = window.screen.height / 2;
-                            const s = Math.min(1, Math.max(-1, (response.left + response.width / 2 - center_x) / center_x * panRate));
-                            const t = Math.min(1, Math.max(-1, (response.top + response.height / 2 - center_y) / center_y * panRate));
-                            [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0, 0, 1.0], s), t);
+                            const s = Math.min(1, Math.max(-1, (response.left + response.width / 2 - center_x) / center_x * panRate)) * Math.PI / 2;
+                            const t = Math.min(1, Math.max(-1, (response.top + response.height / 2 - center_y) / center_y * panRate)) * Math.PI / 2;
+                            [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0, 0, -1.0], s), t);
                         } else {
                             panner.pan.value = Math.min(1, Math.max(-1, (response.left + response.width / 2 - center_x) / center_x * panRate));
                         }
                     }
                 }).catch(error => { });
             } else {
-                if (pan2d) {
-                    panner.positionX.value = 0;
-                    panner.positionY.value = 0;
-                    panner.positionZ.value = 1.0;
-                } else {
-                    panner.pan.value = 0;
-                }
+                resetPan(panner);
             }
         }
     }
@@ -153,12 +142,38 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         return false;
     }
 
+    function resetPan(panner) {
+        if (pan2d) {
+            panner.positionX.value = 0;
+            panner.positionY.value = 0;
+            panner.positionZ.value = -1.0;
+        } else {
+            panner.pan.value = 0;
+        }
+    }
+
     function rotateX(p, s) {
-        return [p[0], p[1] * Math.cos(s) - p[2] * Math.sin(s), p[1] * Math.sin(s) + p[2] * Math.cos(s)];
+        return [
+            p[0],
+            p[1] * Math.cos(s) + p[2] * Math.sin(s),
+            p[1] * -Math.sin(s) + p[2] * Math.cos(s)
+        ];
     }
 
     function rotateY(p, s) {
-        return [p[0] * Math.cos(s) + p[2] * Math.sin(s), p[1], p[2] * Math.cos(s) - p[0] * Math.sin(s)];
+        return [
+            p[0] * Math.cos(s) + p[2] * -Math.sin(s),
+            p[1],
+            p[0] * Math.sin(s) + p[2] * Math.cos(s)
+        ];
+    }
+
+    function rotateZ(p, s) {
+        return [
+            p[0] * Math.cos(s) + p[1] * Math.sin(s),
+            p[0] * -Math.sin(s) + p[1] * Math.cos(s),
+            p[2]
+        ];
     }
 
     new MutationObserver(mutations => {
@@ -182,3 +197,4 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         updatePan();
     });
 });
+
