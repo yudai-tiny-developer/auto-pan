@@ -111,14 +111,14 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             if (enabled !== false) {
                 chrome.runtime.sendMessage('GetCurrentWindow').then(response => {
                     if (response.state !== 'minimized') {
-                        const center_x = window.screen.width / 2;
+                        const center_x = window.screen.width / 2.0;
                         if (pan2d) {
-                            const center_y = window.screen.height / 2;
-                            const s = Math.min(1, Math.max(-1, (response.left + response.width / 2 - center_x) / center_x * panRate)) * Math.PI / 2;
-                            const t = Math.min(1, Math.max(-1, (response.top + response.height / 2 - center_y) / center_y * panRate)) * Math.PI / 2;
-                            [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0, 0, -1.0], s), t);
+                            const center_y = window.screen.height / 2.0;
+                            const s = Math.min(1.0, Math.max(-1.0, (response.left + response.width / 2.0 - center_x) / center_x * panRate)) * Math.PI / 4.0;
+                            const t = Math.min(1.0, Math.max(-1.0, (response.top + response.height / 2.0 - center_y) / center_y * panRate)) * Math.PI / 4.0;
+                            [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0.0, 0.0, -1.0], s), t);
                         } else {
-                            panner.pan.value = Math.min(1, Math.max(-1, (response.left + response.width / 2 - center_x) / center_x * panRate));
+                            panner.pan.value = Math.min(1.0, Math.max(-1.0, (response.left + response.width / 2.0 - center_x) / center_x * panRate));
                         }
                     }
                 }).catch(error => { });
@@ -144,11 +144,11 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
     function resetPan(panner) {
         if (pan2d) {
-            panner.positionX.value = 0;
-            panner.positionY.value = 0;
+            panner.positionX.value = 0.0;
+            panner.positionY.value = 0.0;
             panner.positionZ.value = -1.0;
         } else {
-            panner.pan.value = 0;
+            panner.pan.value = 0.0;
         }
     }
 
@@ -165,14 +165,6 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             p[0] * Math.cos(s) + p[2] * -Math.sin(s),
             p[1],
             p[0] * Math.sin(s) + p[2] * Math.cos(s)
-        ];
-    }
-
-    function rotateZ(p, s) {
-        return [
-            p[0] * Math.cos(s) + p[1] * Math.sin(s),
-            p[0] * -Math.sin(s) + p[1] * Math.cos(s),
-            p[2]
         ];
     }
 
