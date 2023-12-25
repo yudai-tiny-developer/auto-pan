@@ -48,25 +48,24 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
                         if (!panner) {
                             if (pan2d) {
-                                panner = context.createPanner();
-                                panner.panningModel = 'HRTF';
+                                panner = createPanner(context);
                             } else {
-                                panner = context.createStereoPanner();
+                                panner = createStereoPanner(context);
                             }
-                            panner.connect(context.destination);
                         } else {
                             // reconnect if panner changed
-                            if (pan2d && panner.pan && source) {
+                            if (pan2d && panner.pan) {
                                 panner.disconnect();
-                                panner = context.createPanner();
-                                panner.panningModel = 'HRTF';
-                                panner.connect(context.destination);
-                                source.connect(panner);
-                            } else if (!pan2d && panner.positionX && source) {
+                                panner = createPanner(context);
+                                if (source) {
+                                    source.connect(panner);
+                                }
+                            } else if (!pan2d && panner.positionX) {
                                 panner.disconnect();
-                                panner = context.createStereoPanner();
-                                panner.connect(context.destination);
-                                source.connect(panner);
+                                panner = createStereoPanner(context);
+                                if (source) {
+                                    source.connect(panner);
+                                }
                             } else {
                                 // already connected
                             }
@@ -114,8 +113,8 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                         const center_x = window.screen.width / 2.0;
                         if (pan2d) {
                             const center_y = window.screen.height / 2.0;
-                            const s = Math.min(1.0, Math.max(-1.0, (response.left + response.width / 2.0 - center_x) / center_x * panRate)) * Math.PI / 4.0;
-                            const t = Math.min(1.0, Math.max(-1.0, (response.top + response.height / 2.0 - center_y) / center_y * panRate)) * Math.PI / 4.0;
+                            const s = Math.min(1.0, Math.max(-1.0, (response.left + response.width / 2.0 - center_x) / center_x * panRate));
+                            const t = Math.min(1.0, Math.max(-1.0, (response.top + response.height / 2.0 - center_y) / center_y * panRate));
                             [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0.0, 0.0, -1.0], s), t);
                         } else {
                             panner.pan.value = Math.min(1.0, Math.max(-1.0, (response.left + response.width / 2.0 - center_x) / center_x * panRate));
@@ -167,6 +166,21 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             p[0] * Math.sin(s) + p[2] * Math.cos(s)
         ];
     }
+
+    function createStereoPanner(context) {
+        const panner = context.createStereoPanner();
+        panner.connect(context.destination);
+        return panner;
+    }
+
+    function createPanner(context) {
+        const panner = context.createPanner();
+        panner.panningModel = 'HRTF';
+        panner.distanceModel = 'linear';
+        panner.connect(context.destination);
+        return panner;
+    }
+
 
     new MutationObserver(mutations => {
         for (const m of mutations) {
