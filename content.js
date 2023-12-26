@@ -48,24 +48,15 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
                         if (!panner) {
                             if (pan2d) {
-                                panner = createPanner(context);
+                                panner = createPanner();
                             } else {
-                                panner = createStereoPanner(context);
+                                panner = createStereoPanner();
                             }
                         } else {
-                            // reconnect if panner changed
                             if (pan2d && panner.pan) {
-                                panner.disconnect();
-                                panner = createPanner(context);
-                                if (source) {
-                                    source.connect(panner);
-                                }
+                                recreateToPanner();
                             } else if (!pan2d && panner.positionX) {
-                                panner.disconnect();
-                                panner = createStereoPanner(context);
-                                if (source) {
-                                    source.connect(panner);
-                                }
+                                recreateToStereoPanner();
                             } else {
                                 // already connected
                             }
@@ -96,7 +87,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             }, 100);
         } else {
             if (panner) {
-                resetPan(panner);
+                resetPan();
             }
         }
     }
@@ -122,7 +113,9 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                     }
                 }).catch(error => { });
             } else {
-                resetPan(panner);
+                if (panner) {
+                    resetPan();
+                }
             }
         }
     }
@@ -141,14 +134,12 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         return false;
     }
 
-    function resetPan(panner) {
+    function resetPan() {
         if (pan2d) {
-            panner.positionX.value = 0.0;
-            panner.positionY.value = 0.0;
-            panner.positionZ.value = -1.0;
-        } else {
-            panner.pan.value = 0.0;
+            recreateToStereoPanner();
         }
+
+        panner.pan.value = 0;
     }
 
     function rotateX(p, s) {
@@ -167,13 +158,13 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         ];
     }
 
-    function createStereoPanner(context) {
+    function createStereoPanner() {
         const panner = context.createStereoPanner();
         panner.connect(context.destination);
         return panner;
     }
 
-    function createPanner(context) {
+    function createPanner() {
         const panner = context.createPanner();
         panner.panningModel = 'HRTF';
         panner.distanceModel = 'linear';
@@ -181,6 +172,21 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         return panner;
     }
 
+    function recreateToStereoPanner() {
+        panner.disconnect();
+        panner = createStereoPanner();
+        if (source) {
+            source.connect(panner);
+        }
+    }
+
+    function recreateToPanner() {
+        panner.disconnect();
+        panner = createPanner();
+        if (source) {
+            source.connect(panner);
+        }
+    }
 
     new MutationObserver(mutations => {
         for (const m of mutations) {
