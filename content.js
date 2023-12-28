@@ -7,10 +7,10 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
     function initSettings() {
         chrome.storage.local.get(common.storage, data => {
-            enabled = data.enabled === undefined ? common.defaultEnabled : data.enabled;
+            enabled = common.value(data.enabled, common.defaultEnabled);
             panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
-            pan2d = data.pan2d === undefined ? common.defaultPan2d : data.pan2d;
-            smooth = data.smooth === undefined ? common.defaultSmooth : data.smooth;
+            pan2d = common.value(data.pan2d, common.defaultPan2d);
+            smooth = common.value(data.smooth, common.defaultSmooth);
             smoothRate = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
 
             for (const media of document.querySelectorAll('video, audio')) {
