@@ -123,14 +123,26 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     function checkForCORS(media) {
         if (media.srcObject) {
             return true;
-        } else {
-            const regexp = new RegExp('\/\/' + window.location.hostname);
-            if (media.src && media.src.match(regexp)) {
+        }
+
+        if (media.currentSrc) {
+            const url = new URL(media.currentSrc);
+            if (url.protocol === 'blob:') {
                 return true;
-            } else if (media.currentSrc && media.currentSrc.match(regexp)) {
+            } else if (url.hostname === window.location.hostname) {
                 return true;
             }
         }
+
+        if (media.src) {
+            const url = new URL(media.src);
+            if (url.protocol === 'blob:') {
+                return true;
+            } else if (url.hostname === window.location.hostname) {
+                return true;
+            }
+        }
+
         return false;
     }
 
