@@ -36,59 +36,21 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         if (enabled !== false) {
             clearTimeout(connectPanTimer);
             connectPanTimer = setTimeout(() => {
-                if (!context) {
-                    context = new AudioContext();
-                }
-
+                createAudioContext();
                 const timer = setInterval(() => {
                     if (context.state === 'suspended') {
                         context.resume();
                     } else {
                         clearInterval(timer);
-
-                        if (!panner) {
-                            if (pan2d) {
-                                panner = createPanner();
-                            } else {
-                                panner = createStereoPanner();
-                            }
-                        } else {
-                            if (pan2d && panner.pan) {
-                                recreateToPanner();
-                            } else if (!pan2d && panner.positionX) {
-                                recreateToStereoPanner();
-                            } else {
-                                // already connected
-                            }
-                        }
-
-                        if (sourceMedia !== media && checkForCORS(media)) {
-                            try {
-                                sourceMedia = media;
-                                source = context.createMediaElementSource(media);
-                                source.connect(panner);
-                            } catch {
-                                // already connected
-                            }
-                        }
-
+                        createPannerOrStereoPanner();
+                        createMediaElementSource(media);
                         updatePan();
-
-                        if (smooth) {
-                            clearInterval(smoothTimer);
-                            smoothTimer = setInterval(() => {
-                                updatePan();
-                            }, smoothRate);
-                        } else {
-                            clearInterval(smoothTimer);
-                        }
+                        setSmoothInterval();
                     }
                 }, 100);
             }, 100);
         } else {
-            if (panner) {
-                resetPan();
-            }
+            resetPan();
         }
     }
 
@@ -113,9 +75,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                     }
                 }).catch(error => { });
             } else {
-                if (panner) {
-                    resetPan();
-                }
+                resetPan();
             }
         }
     }
@@ -147,11 +107,13 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     }
 
     function resetPan() {
-        if (pan2d) {
-            recreateToStereoPanner();
-        }
+        if (panner) {
+            if (pan2d) {
+                recreateToStereoPanner();
+            }
 
-        panner.pan.value = 0;
+            panner.pan.value = 0;
+        }
     }
 
     function rotateX(p, s) {
@@ -197,6 +159,53 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         panner = createPanner();
         if (source) {
             source.connect(panner);
+        }
+    }
+
+    function createPannerOrStereoPanner() {
+        if (!panner) {
+            if (pan2d) {
+                panner = createPanner();
+            } else {
+                panner = createStereoPanner();
+            }
+        } else {
+            if (pan2d && panner.pan) {
+                recreateToPanner();
+            } else if (!pan2d && panner.positionX) {
+                recreateToStereoPanner();
+            } else {
+                // already connected
+            }
+        }
+    }
+
+    function createMediaElementSource(media) {
+        if (sourceMedia !== media && checkForCORS(media)) {
+            try {
+                sourceMedia = media;
+                source = context.createMediaElementSource(media);
+                source.connect(panner);
+            } catch {
+                // already connected
+            }
+        }
+    }
+
+    function setSmoothInterval() {
+        if (smooth) {
+            clearInterval(smoothTimer);
+            smoothTimer = setInterval(() => {
+                updatePan();
+            }, smoothRate);
+        } else {
+            clearInterval(smoothTimer);
+        }
+    }
+
+    function createAudioContext() {
+        if (!context) {
+            context = new AudioContext();
         }
     }
 
