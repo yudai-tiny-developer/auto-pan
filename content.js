@@ -104,6 +104,8 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             } else if (url.hostname === window.location.hostname) {
                 return true;
             }
+        } else {
+            return true;
         }
         return false;
     }
