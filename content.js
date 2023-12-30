@@ -85,24 +85,26 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             return true;
         }
 
-        if (media.currentSrc) {
-            const url = new URL(media.currentSrc);
+        if (checkURLForCORS(media.currentSrc)) {
+            return true;
+        }
+
+        if (checkURLForCORS(media.src)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function checkURLForCORS(src) {
+        if (src && src !== '') {
+            const url = new URL(src);
             if (url.protocol === 'blob:') {
                 return true;
             } else if (url.hostname === window.location.hostname) {
                 return true;
             }
         }
-
-        if (media.src) {
-            const url = new URL(media.src);
-            if (url.protocol === 'blob:') {
-                return true;
-            } else if (url.hostname === window.location.hostname) {
-                return true;
-            }
-        }
-
         return false;
     }
 
