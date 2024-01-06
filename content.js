@@ -122,11 +122,27 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     }
 
     function setMediaElementSource(media) {
-        if (!source.has(media) && checkMediaElementCors(media)) {
+        if (!source.has(media) && hasSrc(media) && checkMediaElementCors(media)) {
             const s = context.createMediaElementSource(media);
             s.connect(panner);
             source.set(media, s);
         }
+    }
+
+    function hasSrc(media) {
+        if (media.srcObject) {
+            return true;
+        }
+
+        if (media.currentSrc && media.currentSrc !== '') {
+            return true;
+        }
+
+        if (media.src && media.src !== '') {
+            return true;
+        }
+
+        return false;
     }
 
     function checkMediaElementCors(media) {
@@ -152,11 +168,12 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                 return true;
             } else if (url.hostname === window.location.hostname) {
                 return true;
+            } else {
+                return false;
             }
         } else {
             return true;
         }
-        return false;
     }
 
     function updatePanValue() {
