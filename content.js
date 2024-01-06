@@ -3,7 +3,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     let panRate = common.defaultPanRate;
     let pan2d = common.defaultPan2d;
     let smooth = common.defaultSmooth;
-    let smoothRate = common.defaultSmoothRate;
+    let smoothInterval = common.defaultSmoothRate;
 
     function initSettings() {
         chrome.storage.local.get(common.storage, data => {
@@ -11,7 +11,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
             pan2d = common.value(data.pan2d, common.defaultPan2d);
             smooth = common.value(data.smooth, common.defaultSmooth);
-            smoothRate = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
+            smoothInterval = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
 
             for (const media of document.querySelectorAll('video, audio')) {
                 setAutoPan(media);
@@ -198,7 +198,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             clearInterval(smoothTimer);
             smoothTimer = setInterval(() => {
                 updatePanValue();
-            }, smoothRate);
+            }, smoothInterval);
         } else {
             clearInterval(smoothTimer);
         }
