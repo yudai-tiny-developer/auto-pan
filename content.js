@@ -57,10 +57,6 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         if (!context) {
             context = new AudioContext();
         }
-
-        if (panner) {
-            panner.connect(context.destination);
-        }
     }
 
     function setPannerOrStereoPanner() {
@@ -68,14 +64,6 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             setPanner();
         } else {
             setStereoPanner();
-        }
-
-        if (context) {
-            panner.connect(context.destination);
-        }
-
-        for (const s of source.values()) {
-            s.connect(panner);
         }
     }
 
@@ -98,6 +86,11 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         panner = context.createPanner();
         panner.panningModel = 'HRTF';
         panner.distanceModel = 'linear';
+        panner.connect(context.destination);
+        for (const s of source.values()) {
+            s.disconnect();
+            s.connect(panner);
+        }
     }
 
     function setStereoPanner() {
@@ -117,6 +110,11 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
     function createStereoPanner() {
         panner = context.createStereoPanner();
+        panner.connect(context.destination);
+        for (const s of source.values()) {
+            s.disconnect();
+            s.connect(panner);
+        }
     }
 
     function setMediaElementSource(media) {
@@ -207,11 +205,11 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     }
 
     function removePanner() {
-        if (context) {
-            for (const s of source.values()) {
-                s.connect(context.destination);
-            }
+        for (const s of source.values()) {
+            s.disconnect();
+            s.connect(context.destination);
         }
+
 
         if (panner) {
             panner.disconnect();
