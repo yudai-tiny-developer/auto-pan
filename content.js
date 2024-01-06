@@ -43,7 +43,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                         clearInterval(timer);
                         setPannerOrStereoPanner();
                         setMediaElementSource(media);
-                        updateAutoPan();
+                        updatePanValue();
                         setSmoothInterval();
                     }
                 }, 100);
@@ -155,7 +155,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         return false;
     }
 
-    function updateAutoPan() {
+    function updatePanValue() {
         if (panner) {
             try {
                 chrome.runtime.sendMessage('GetCurrentWindow').then(currentWindow => {
@@ -197,7 +197,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         if (smooth) {
             clearInterval(smoothTimer);
             smoothTimer = setInterval(() => {
-                updateAutoPan();
+                updatePanValue();
             }, smoothRate);
         } else {
             clearInterval(smoothTimer);
@@ -237,7 +237,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     });
 
     chrome.runtime.onMessage.addListener(() => {
-        updateAutoPan();
+        updatePanValue();
     });
 });
 
