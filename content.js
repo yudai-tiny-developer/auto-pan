@@ -125,7 +125,6 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             s.connect(panner);
             source.set(media, s);
         }
-        console.log(source);
     }
 
     function checkMediaElementCors(media) {
