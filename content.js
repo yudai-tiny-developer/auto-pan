@@ -35,22 +35,18 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         if (enabled) {
             clearTimeout(setAutoPanTimer);
             setAutoPanTimer = setTimeout(() => {
-                try {
-                    setAudioContext();
-                    const timer = setInterval(() => {
-                        if (context.state === 'suspended') {
-                            context.resume();
-                        } else {
-                            clearInterval(timer);
-                            setPannerOrStereoPanner();
-                            setMediaElementSource(media);
-                            updatePanValue();
-                            setSmoothInterval();
-                        }
-                    }, 100);
-                } catch {
-                    // The AudioContext was not allowed to start
-                }
+                setAudioContext();
+                const timer = setInterval(() => {
+                    if (context.state === 'suspended') {
+                        context.resume();
+                    } else {
+                        clearInterval(timer);
+                        setPannerOrStereoPanner();
+                        setMediaElementSource(media);
+                        updatePanValue();
+                        setSmoothInterval();
+                    }
+                }, 100);
             }, 100);
         } else {
             removePanner();
