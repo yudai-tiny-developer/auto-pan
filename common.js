@@ -15,6 +15,10 @@ export const minSmoothRate = 50;
 export const maxSmoothRate = 1000;
 export const stepSmoothRate = 50;
 
+export function value(value, defaultValue) {
+    return value === undefined ? defaultValue : value;
+}
+
 export function limitRate(value, defaultValue, minRate, maxRate, stepRate) {
     return step(range(normalize(value, defaultValue), minRate, maxRate), stepRate);
 }

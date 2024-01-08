@@ -3,18 +3,18 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     let panRate = common.defaultPanRate;
     let pan2d = common.defaultPan2d;
     let smooth = common.defaultSmooth;
-    let smoothRate = common.defaultSmoothRate;
+    let smoothInterval = common.defaultSmoothRate;
 
     function initSettings() {
         chrome.storage.local.get(common.storage, data => {
-            enabled = data.enabled === undefined ? common.defaultEnabled : data.enabled;
+            enabled = common.value(data.enabled, common.defaultEnabled);
             panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
-            pan2d = data.pan2d === undefined ? common.defaultPan2d : data.pan2d;
-            smooth = data.smooth === undefined ? common.defaultSmooth : data.smooth;
-            smoothRate = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
+            pan2d = common.value(data.pan2d, common.defaultPan2d);
+            smooth = common.value(data.smooth, common.defaultSmooth);
+            smoothInterval = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
 
             for (const media of document.querySelectorAll('video, audio')) {
-                connectPan(media);
+                setAutoPan(media);
             }
         });
     }
@@ -27,119 +27,171 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
     let context;
     let panner;
-    let sourceMedia;
-    let source;
-    let connectPanTimer;
+    let source = new Map();
+    let setAutoPanTimer;
     let smoothTimer;
 
-    function connectPan(media) {
-        if (enabled !== false) {
-            clearTimeout(connectPanTimer);
-            connectPanTimer = setTimeout(() => {
-                if (!context) {
-                    context = new AudioContext();
-                }
-
+    function setAutoPan(media) {
+        if (enabled) {
+            clearTimeout(setAutoPanTimer);
+            setAutoPanTimer = setTimeout(() => {
+                setAudioContext();
                 const timer = setInterval(() => {
                     if (context.state === 'suspended') {
                         context.resume();
                     } else {
                         clearInterval(timer);
-
-                        if (!panner) {
-                            if (pan2d) {
-                                panner = createPanner();
-                            } else {
-                                panner = createStereoPanner();
-                            }
-                        } else {
-                            if (pan2d && panner.pan) {
-                                recreateToPanner();
-                            } else if (!pan2d && panner.positionX) {
-                                recreateToStereoPanner();
-                            } else {
-                                // already connected
-                            }
-                        }
-
-                        if (sourceMedia !== media && checkForCORS(media)) {
-                            try {
-                                sourceMedia = media;
-                                source = context.createMediaElementSource(media);
-                                source.connect(panner);
-                            } catch {
-                                // already connected
-                            }
-                        }
-
-                        updatePan();
-
-                        if (smooth) {
-                            clearInterval(smoothTimer);
-                            smoothTimer = setInterval(() => {
-                                updatePan();
-                            }, smoothRate);
-                        } else {
-                            clearInterval(smoothTimer);
-                        }
+                        setPannerOrStereoPanner();
+                        setMediaElementSource(media);
+                        updatePanValue();
+                        setSmoothInterval();
                     }
                 }, 100);
             }, 100);
         } else {
-            if (panner) {
-                resetPan();
-            }
+            removePanner();
         }
     }
 
-    function updatePan() {
+    function setAudioContext() {
+        if (!context) {
+            context = new AudioContext();
+        }
+    }
+
+    function setPannerOrStereoPanner() {
+        if (pan2d) {
+            setPanner();
+        } else {
+            setStereoPanner();
+        }
+    }
+
+    function setPanner() {
         if (panner) {
-            if (smooth === false) {
-                clearInterval(smoothTimer);
+            if (panner.pan) { // if panner is StereoPanner then
+                changeToPanner();
             }
-
-            if (enabled !== false) {
-                chrome.runtime.sendMessage('GetCurrentWindow').then(response => {
-                    if (response.state !== 'minimized') {
-                        const center_x = window.screen.width / 2.0;
-                        if (pan2d) {
-                            const center_y = window.screen.height / 2.0;
-                            const s = Math.min(1.0, Math.max(-1.0, (response.left + response.width / 2.0 - center_x) / center_x * panRate));
-                            const t = Math.min(1.0, Math.max(-1.0, (response.top + response.height / 2.0 - center_y) / center_y * panRate));
-                            [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0.0, 0.0, -1.0], s), t);
-                        } else {
-                            panner.pan.value = Math.min(1.0, Math.max(-1.0, (response.left + response.width / 2.0 - center_x) / center_x * panRate));
-                        }
-                    }
-                }).catch(error => { });
-            } else {
-                if (panner) {
-                    resetPan();
-                }
-            }
+        } else {
+            createPanner();
         }
     }
 
-    function checkForCORS(media) {
+    function changeToPanner() {
+        panner.disconnect();
+        createPanner();
+    }
+
+    function createPanner() {
+        panner = context.createPanner();
+        panner.panningModel = 'HRTF';
+        panner.distanceModel = 'linear';
+        panner.connect(context.destination);
+        for (const s of source.values()) {
+            s.disconnect();
+            s.connect(panner);
+        }
+    }
+
+    function setStereoPanner() {
+        if (panner) {
+            if (panner.positionX) { // if panner is Panner then
+                changeToStereoPanner();
+            }
+        } else {
+            createStereoPanner();
+        }
+    }
+
+    function changeToStereoPanner() {
+        panner.disconnect();
+        createStereoPanner();
+    }
+
+    function createStereoPanner() {
+        panner = context.createStereoPanner();
+        panner.connect(context.destination);
+        for (const s of source.values()) {
+            s.disconnect();
+            s.connect(panner);
+        }
+    }
+
+    function setMediaElementSource(media) {
+        if (!source.has(media) && hasSrc(media) && checkMediaElementCors(media)) {
+            const s = context.createMediaElementSource(media);
+            s.connect(panner);
+            source.set(media, s);
+        }
+    }
+
+    function hasSrc(media) {
         if (media.srcObject) {
             return true;
-        } else {
-            const regexp = new RegExp('\/\/' + window.location.hostname);
-            if (media.src && media.src.match(regexp)) {
-                return true;
-            } else if (media.currentSrc && media.currentSrc.match(regexp)) {
-                return true;
-            }
         }
+
+        if (media.currentSrc && media.currentSrc !== '') {
+            return true;
+        }
+
+        if (media.src && media.src !== '') {
+            return true;
+        }
+
         return false;
     }
 
-    function resetPan() {
-        if (pan2d) {
-            recreateToStereoPanner();
+    function checkMediaElementCors(media) {
+        if (media.srcObject) {
+            return true;
         }
 
-        panner.pan.value = 0;
+        if (checkUrlCors(media.currentSrc)) {
+            return true;
+        }
+
+        if (checkUrlCors(media.src)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function checkUrlCors(src) {
+        if (src && src !== '') {
+            const url = new URL(src);
+            if (url.protocol === 'blob:') {
+                return true;
+            } else if (url.hostname === window.location.hostname) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+
+    function updatePanValue() {
+        if (panner) {
+            try {
+                chrome.runtime.sendMessage('GetCurrentWindow').then(currentWindow => {
+                    if (currentWindow.state !== 'minimized') {
+                        const center_x = window.screen.width / 2.0;
+                        if (panner.pan) {
+                            panner.pan.value = Math.min(1.0, Math.max(-1.0, (currentWindow.left + currentWindow.width / 2.0 - center_x) / center_x * panRate));
+                        } else {
+                            const center_y = window.screen.height / 2.0;
+                            const s = Math.min(1.0, Math.max(-1.0, (currentWindow.left + currentWindow.width / 2.0 - center_x) / center_x * panRate));
+                            const t = Math.min(1.0, Math.max(-1.0, (currentWindow.top + currentWindow.height / 2.0 - center_y) / center_y * panRate));
+                            [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0.0, 0.0, -1.0], s), t);
+                        }
+                    }
+                });
+            } catch {
+                // service_worker not ready
+            }
+        }
     }
 
     function rotateX(p, s) {
@@ -158,45 +210,41 @@ import(chrome.runtime.getURL('common.js')).then(common => {
         ];
     }
 
-    function createStereoPanner() {
-        const panner = context.createStereoPanner();
-        panner.connect(context.destination);
-        return panner;
-    }
-
-    function createPanner() {
-        const panner = context.createPanner();
-        panner.panningModel = 'HRTF';
-        panner.distanceModel = 'linear';
-        panner.connect(context.destination);
-        return panner;
-    }
-
-    function recreateToStereoPanner() {
-        panner.disconnect();
-        panner = createStereoPanner();
-        if (source) {
-            source.connect(panner);
+    function setSmoothInterval() {
+        if (smooth) {
+            clearInterval(smoothTimer);
+            smoothTimer = setInterval(() => {
+                updatePanValue();
+            }, smoothInterval);
+        } else {
+            clearInterval(smoothTimer);
         }
     }
 
-    function recreateToPanner() {
-        panner.disconnect();
-        panner = createPanner();
-        if (source) {
-            source.connect(panner);
+    function removePanner() {
+        for (const s of source.values()) {
+            s.disconnect();
+            s.connect(context.destination);
         }
+
+
+        if (panner) {
+            panner.disconnect();
+            panner = undefined;
+        }
+
+        clearInterval(smoothTimer);
     }
 
     new MutationObserver(mutations => {
         for (const m of mutations) {
             for (const media of m.target.querySelectorAll('video, audio')) {
-                connectPan(media);
+                setAutoPan(media);
             }
 
             for (const n of m.addedNodes) {
                 if (n.nodeName === 'VIDEO' || n.nodeName === 'AUDIO') {
-                    connectPan(n);
+                    setAutoPan(n);
                 }
             }
         }
@@ -206,7 +254,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     });
 
     chrome.runtime.onMessage.addListener(() => {
-        updatePan();
+        updatePanValue();
     });
 });
 
