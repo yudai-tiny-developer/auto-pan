@@ -28,26 +28,17 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     let context;
     let panner;
     let source = new Map();
-    let setAutoPanTimer;
     let smoothTimer;
 
     function setAutoPan(media) {
         if (enabled) {
-            clearTimeout(setAutoPanTimer);
-            setAutoPanTimer = setTimeout(() => {
-                setAudioContext();
-                const timer = setInterval(() => {
-                    if (context.state === 'suspended') {
-                        context.resume();
-                    } else {
-                        clearInterval(timer);
-                        setPannerOrStereoPanner();
-                        setMediaElementSource(media);
-                        updatePanValue();
-                        setSmoothInterval();
-                    }
-                }, 100);
-            }, 100);
+            setAudioContext();
+            context.resume().then(() => {
+                setPannerOrStereoPanner();
+                setMediaElementSource(media);
+                updatePanValue();
+                setSmoothInterval();
+            });
         } else {
             removePanner();
         }
