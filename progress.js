@@ -1,32 +1,21 @@
-let hold;
-let holdTimeout;
+export function startProgress(div, state) {
+    clearTimeout(state.holdTimeout);
+    div.classList.add('progress');
+    div.classList.remove('done');
+    state.done = false;
 
-export function startProgress() {
-    clearTimeout(holdTimeout);
-    document.querySelector('div#reset_progress').classList.add('progress');
-    document.querySelector('div#reset_progress').classList.remove('done');
-    hold = false;
-
-    holdTimeout = setTimeout(() => {
-        document.querySelector('div#reset_progress').classList.remove('progress');
-        document.querySelector('div#reset_progress').classList.add('done');
-        hold = true;
+    state.holdTimeout = setTimeout(() => {
+        div.classList.remove('progress');
+        div.classList.add('done');
+        state.done = true;
     }, 1000);
 }
 
-export function cancelProgress() {
-    clearTimeout(holdTimeout);
-    document.querySelector('div#reset_progress').classList.remove('progress', 'done');
-    hold = false;
-}
-
-export function endProgress(callback) {
-    clearTimeout(holdTimeout);
-    document.querySelector('div#reset_progress').classList.remove('progress', 'done');
-    callback();
-    hold = false;
-}
-
-export function isDone() {
-    return hold;
+export function endProgress(div, state, callback) {
+    clearTimeout(state.holdTimeout);
+    div.classList.remove('progress', 'done');
+    if (callback && state.done) {
+        callback();
+    }
+    state.done = false;
 }
