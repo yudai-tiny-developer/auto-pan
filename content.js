@@ -10,7 +10,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             enabled = common.value(data.enabled, common.defaultEnabled);
             panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
             pan2d = common.value(data.pan2d, common.defaultPan2d);
-            smooth = browser === undefined ? common.value(data.smooth, common.defaultSmooth) : true;
+            smooth = typeof browser === 'undefined' ? common.value(data.smooth, common.defaultSmooth) : true;
             smoothInterval = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
 
             for (const media of document.querySelectorAll('video, audio')) {
@@ -165,7 +165,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
     function updatePanValue() {
         if (panner) {
-            if (browser === undefined) { // if chrome
+            if (typeof browser === 'undefined') { // if chrome
                 try {
                     chrome.runtime.sendMessage('GetCurrentWindow').then(currentWindow => {
                         updatePanValueChrome(currentWindow);
