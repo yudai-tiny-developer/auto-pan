@@ -42,10 +42,12 @@ function main(common, settings, progress, data) {
         row.appendChild(settings.createToggle(cell_class, toggle_class, label_class, 'pan2d', data.pan2d, common.defaultpPan2d, common.value));
         container.appendChild(row);
     } {
-        const row = settings.createRow(row_class);
-        row.appendChild(settings.createLabel(cell_class, 'Smooth panning (High CPU load)'));
-        row.appendChild(settings.createToggle(cell_class, toggle_class, label_class, 'smooth', data.smooth, common.defaultSmooth, common.value));
-        container.appendChild(row);
+        if (typeof browser === 'undefined') {
+            const row = settings.createRow(row_class);
+            row.appendChild(settings.createLabel(cell_class, 'Smooth panning (High CPU load)'));
+            row.appendChild(settings.createToggle(cell_class, toggle_class, label_class, 'smooth', data.smooth, common.defaultSmooth, common.value));
+            container.appendChild(row);
+        }
     } {
         const row = settings.createRow(row_class);
         row.appendChild(settings.createLabel(cell_class, `Smoothing Interval (${common.minSmoothRate.toFixed(0)} ms ~ ${common.maxSmoothRate.toFixed(0)} ms)`));
