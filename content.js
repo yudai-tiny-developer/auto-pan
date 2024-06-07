@@ -13,7 +13,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             smooth = typeof browser === 'undefined' ? common.value(data.smooth, common.defaultSmooth) : true;
             smoothInterval = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
 
-            for (const media of document.querySelectorAll('video, audio')) {
+            for (const media of document.body.querySelectorAll('video, audio')) {
                 setAutoPan(media);
             }
         });
