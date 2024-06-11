@@ -251,12 +251,12 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
     new MutationObserver(mutations => {
         for (const m of mutations) {
-            if (m.target.matches('video, audio')) {
-                setAutoPan(m.target);
+            for (const media of m.target.querySelectorAll('video, audio')) {
+                setAutoPan(media);
             }
 
             for (const n of m.addedNodes) {
-                if (n.matches('video, audio')) {
+                if (n.nodeName === 'VIDEO' || n.nodeName === 'AUDIO') {
                     setAutoPan(n);
                 }
             }
