@@ -18,20 +18,12 @@ jobs:
         run: |
           REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}
           VERSION=$(cat manifest.json | jq -r .version)
-          echo "ZIPFILE_NAME_CHROME=/tmp/${REPOSITORY_NAME}-${VERSION}-chrome.zip" >> $GITHUB_OUTPUT
-          echo "ZIPFILE_NAME_FIREFOX=/tmp/${REPOSITORY_NAME}-${VERSION}-firefox.zip" >> $GITHUB_OUTPUT
+          echo "ZIPFILE_NAME=/tmp/${REPOSITORY_NAME}-${VERSION}.zip" >> $GITHUB_OUTPUT
           echo "TAG=v${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: zip for chrome
-        run: zip -r "${{ steps.variables.outputs.ZIPFILE_NAME_CHROME }}" * -x browser_specific_settings.json
+      - name: zip
+        run: zip -r "${{ steps.variables.outputs.ZIPFILE_NAME }}" * -x browser_specific_settings.json
     
-      - name: zip for firefox
-        run: |
-          jq -s add manifest.json browser_specific_settings.json > manifest-firefox.json
-          rm manifest.json
-          mv manifest-firefox.json manifest.json
-          zip -r "${{ steps.variables.outputs.ZIPFILE_NAME_FIREFOX }}" * -x browser_specific_settings.json
-
       - name: remove release and tag if exists
         run: |
           gh release delete ${{ steps.variables.outputs.TAG }} --cleanup-tag --yes || true
@@ -39,8 +31,6 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          files: |
-            ${{ steps.variables.outputs.ZIPFILE_NAME_CHROME }}
-            ${{ steps.variables.outputs.ZIPFILE_NAME_FIREFOX }}
+          files: ${{ steps.variables.outputs.ZIPFILE_NAME }}
           tag_name: ${{ steps.variables.outputs.TAG }}
           generate_release_notes: true

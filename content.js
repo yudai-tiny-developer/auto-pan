@@ -10,7 +10,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
             enabled = common.value(data.enabled, common.defaultEnabled);
             panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
             pan2d = common.value(data.pan2d, common.defaultPan2d);
-            smooth = typeof browser === 'undefined' ? common.value(data.smooth, common.defaultSmooth) : true;
+            smooth = common.value(data.smooth, common.defaultSmooth);
             smoothInterval = common.limitRate(data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate);
 
             for (const media of document.body.querySelectorAll('video, audio')) {
@@ -165,21 +165,17 @@ import(chrome.runtime.getURL('common.js')).then(common => {
 
     function updatePanValue() {
         if (panner) {
-            if (typeof browser === 'undefined') { // if chrome
-                try {
-                    chrome.runtime.sendMessage('GetCurrentWindow').then(currentWindow => {
-                        updatePanValueChrome(currentWindow);
-                    });
-                } catch {
-                    // service_worker not ready
-                }
-            } else { // if firefox
-                updatePanValueFirefox();
+            try {
+                chrome.runtime.sendMessage('GetCurrentWindow').then(currentWindow => {
+                    updateTargetWindowPanValue(currentWindow);
+                });
+            } catch {
+                // service_worker not ready
             }
         }
     }
 
-    function updatePanValueChrome(currentWindow) {
+    function updateTargetWindowPanValue(currentWindow) {
         if (currentWindow.state !== 'minimized') {
             const center_x = window.screen.width / 2.0;
             if (panner.pan) {
@@ -188,20 +184,6 @@ import(chrome.runtime.getURL('common.js')).then(common => {
                 const center_y = window.screen.height / 2.0;
                 const s = Math.min(1.0, Math.max(-1.0, (currentWindow.left + currentWindow.width / 2.0 - center_x) / center_x * panRate));
                 const t = Math.min(1.0, Math.max(-1.0, (currentWindow.top + currentWindow.height / 2.0 - center_y) / center_y * panRate));
-                [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0.0, 0.0, -1.0], s), t);
-            }
-        }
-    }
-
-    function updatePanValueFirefox() {
-        if (window.windowState !== 2) { // minimized(2)
-            const center_x = window.screen.width / 2.0;
-            if (panner.pan) {
-                panner.pan.value = Math.min(1.0, Math.max(-1.0, (window.screenX + window.outerWidth / 2.0 - center_x) / center_x * panRate));
-            } else {
-                const center_y = window.screen.height / 2.0;
-                const s = Math.min(1.0, Math.max(-1.0, (window.screenX + window.outerWidth / 2.0 - center_x) / center_x * panRate));
-                const t = Math.min(1.0, Math.max(-1.0, (window.screenY + window.outerHeight / 2.0 - center_y) / center_y * panRate));
                 [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0.0, 0.0, -1.0], s), t);
             }
         }
