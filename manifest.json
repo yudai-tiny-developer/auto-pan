@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Auto Pan by Window Position",
-    "version": "1.10.1",
+    "version": "1.10.2",
     "description": "__MSG_appDesc__",
     "default_locale": "en",
     "icons": {
@@ -26,9 +26,7 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "common.js",
-                "settings.js",
-                "progress.js"
+                "common.js"
             ],
             "matches": [
                 "*://*/*"
