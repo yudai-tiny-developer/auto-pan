@@ -176,7 +176,7 @@ import(chrome.runtime.getURL('common.js')).then(common => {
     }
 
     function updateTargetWindowPanValue(currentWindow) {
-        if (currentWindow.state !== 'minimized') {
+        if (panner && currentWindow.state !== 'minimized') {
             const center_x = window.screen.width / 2.0;
             if (panner.pan) {
                 panner.pan.value = Math.min(1.0, Math.max(-1.0, (currentWindow.left + currentWindow.width / 2.0 - center_x) / center_x * panRate));
