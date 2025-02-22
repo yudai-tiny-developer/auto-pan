@@ -80,7 +80,7 @@ function main(common) {
     }
 
     function setMediaElementSource(media) {
-        if (!sources.has(media) && hasSrc(media) && isSameOriginMedia(media)) {
+        if (hasSrc(media) && isSameOriginMedia(media)) {
             media.setAttribute('_auto-pan', '');
             const source = context.createMediaElementSource(media);
             sources.set(media, source);
