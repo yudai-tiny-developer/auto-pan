@@ -69,11 +69,9 @@ function main(common) {
     }
 
     function onPlay(event) {
-        if (context.state === 'suspended') {
-            context.resume().then(() => {
-                setMediaElementSource(event.target);
-            });
-        }
+        context.resume().then(() => {
+            setMediaElementSource(event.target);
+        });
     }
 
     function setMediaElementSource(media) {
