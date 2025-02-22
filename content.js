@@ -9,10 +9,14 @@ function main(common) {
             panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
             pan2d = common.value(data.pan2d, common.defaultPan2d);
 
+            clearInterval(interval);
             if (enabled) {
-                setPannerOrStereoPanner();
+                interval = setInterval(() => {
+                    addEventListenerToAllMedia();
+                    updatePan();
+                }, 100);
             } else {
-                removeAllPanner();
+                resetPan();
             }
         });
     }
@@ -60,26 +64,19 @@ function main(common) {
     }
 
     function addEventListenerToAllMedia() {
-        for (const media of document.body.querySelectorAll('video, audio')) {
-            media.addEventListener('play', onPlay);
-            if (media.played) {
-                onPlay({ target: media });
-            }
+        for (const media of document.body.querySelectorAll('video:not([_auto-pan]), audio:not([_auto-pan])')) {
+            context.resume().then(() => {
+                setMediaElementSource(media);
+            });
         }
     }
 
-    function onPlay(event) {
-        context.resume().then(() => {
-            setMediaElementSource(event.target);
-        });
-    }
-
     function setMediaElementSource(media) {
-        if (!media.hasAttribute('_auto-pan') && !sources.has(media) && hasSrc(media) && isSameOriginMedia(media)) {
+        if (!sources.has(media) && hasSrc(media) && isSameOriginMedia(media)) {
             media.setAttribute('_auto-pan', '');
             const source = context.createMediaElementSource(media);
-            source.connect(panner);
             sources.set(media, source);
+            source.connect(panner);
         }
     }
 
@@ -131,7 +128,7 @@ function main(common) {
     }
 
     function updatePan() {
-        if (enabled && panner) {
+        if (enabled) {
             try {
                 chrome.runtime.sendMessage('GetCurrentWindow').then(currentWindow => {
                     updateWindowPan(currentWindow);
@@ -139,19 +136,31 @@ function main(common) {
             } catch {
                 // service_worker not ready
             }
+        } else {
+            resetPan();
         }
     }
 
     function updateWindowPan(targetWindow) {
-        if (enabled && panner && targetWindow.state !== 'minimized') {
+        if (panner && targetWindow.state !== 'minimized') {
             const center_x = window.screen.width / 2.0;
-            if (panner.pan) { // Panner
+            if (panner.pan) {
                 panner.pan.value = Math.min(1.0, Math.max(-1.0, (targetWindow.left + targetWindow.width / 2.0 - center_x) / center_x * panRate));
-            } else { // StereoPanner
+            } else {
                 const center_y = window.screen.height / 2.0;
                 const s = Math.min(1.0, Math.max(-1.0, (targetWindow.left + targetWindow.width / 2.0 - center_x) / center_x * panRate));
                 const t = Math.min(1.0, Math.max(-1.0, (targetWindow.top + targetWindow.height / 2.0 - center_y) / center_y * panRate));
                 [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0.0, 0.0, -1.0], s), t);
+            }
+        }
+    }
+
+    function resetPan() {
+        if (panner) {
+            if (panner.pan) {
+                panner.pan.value = 0.0;
+            } else {
+                [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = [0.0, 0.0, 0.0];
             }
         }
     }
@@ -172,34 +181,17 @@ function main(common) {
         ];
     }
 
-    function removeAllPanner() {
-        sources.forEach((source, media, map) => {
-            source.disconnect();
-            source.connect(context.destination);
-            media.setAttribute('_auto-pan', '');
-            media.removeEventListener(onPlay);
-        });
-        sources.clear();
-
-        if (panner) {
-            panner.disconnect();
-            panner = undefined;
-        }
-    }
-
     let enabled = common.defaultEnabled;
     let panRate = common.defaultPanRate;
     let pan2d = common.defaultPan2d;
     let context = new AudioContext();
     let panner;
     let sources = new Map();
+    let interval;
 
     chrome.storage.onChanged.addListener(loadSettings);
 
     loadSettings();
 
-    setInterval(() => {
-        addEventListenerToAllMedia();
-        updatePan();
-    }, 100);
+    setPannerOrStereoPanner();
 }
