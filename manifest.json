@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Auto Pan by Window Position",
-    "version": "1.11.0",
+    "version": "1.12.0",
     "description": "__MSG_appDesc__",
     "default_locale": "en",
     "icons": {
@@ -17,7 +17,8 @@
             "run_at": "document_end",
             "matches": [
                 "*://*/*"
-            ]
+            ],
+            "all_frames": true
         }
     ],
     "background": {

@@ -1,19 +1,13 @@
-export const storage = ['enabled', 'panRate', 'pan2d', 'smooth', 'smoothRate'];
+export const storage = ['enabled', 'panRate', 'pan2d'];
 
 export const defaultEnabled = true;
 
 export const defaultPanRate = 1.6;
-export const minPanRate = 0.0;
+export const minPanRate = 0.1;
 export const maxPanRate = 2.0;
 export const stepPanRate = 0.1;
 
 export const defaultPan2d = false;
-
-export const defaultSmooth = false;
-export const defaultSmoothRate = 250;
-export const minSmoothRate = 50;
-export const maxSmoothRate = 1000;
-export const stepSmoothRate = 50;
 
 export function value(value, defaultValue) {
     return value === undefined ? defaultValue : value;
