@@ -9,6 +9,8 @@ function main(common) {
             panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
             pan2d = common.value(data.pan2d, common.defaultPan2d);
 
+            setPannerOrStereoPanner();
+
             clearInterval(interval);
             if (enabled) {
                 interval = setInterval(() => {
@@ -34,6 +36,9 @@ function main(common) {
             if (panner.pan) { // if panner is StereoPanner then
                 panner.disconnect();
                 createPanner();
+                for (const source of sources.values()) {
+                    source.connect(panner);
+                }
             }
         } else {
             createPanner();
@@ -52,6 +57,9 @@ function main(common) {
             if (panner.positionX) { // if panner is Panner then
                 panner.disconnect();
                 createStereoPanner();
+                for (const source of sources.values()) {
+                    source.connect(panner);
+                }
             }
         } else {
             createStereoPanner();
@@ -192,6 +200,4 @@ function main(common) {
     chrome.storage.onChanged.addListener(loadSettings);
 
     loadSettings();
-
-    setPannerOrStereoPanner();
 }
