@@ -41,21 +41,6 @@ function main(common, settings, progress, data) {
         row.appendChild(settings.createLabel(cell_class, 'Use vertical'));
         row.appendChild(settings.createToggle(cell_class, toggle_class, label_class, 'pan2d', data.pan2d, common.defaultpPan2d, common.value));
         container.appendChild(row);
-    } {
-        const row = settings.createRow(row_class);
-        row.appendChild(settings.createLabel(cell_class, 'Smooth panning (High CPU load)'));
-        row.appendChild(settings.createToggle(cell_class, toggle_class, label_class, 'smooth', data.smooth, common.defaultSmooth, common.value));
-        container.appendChild(row);
-    } {
-        const row = settings.createRow(row_class);
-        row.appendChild(settings.createLabel(cell_class, `Smoothing Interval (${common.minSmoothRate.toFixed(0)} ms ~ ${common.maxSmoothRate.toFixed(0)} ms)`));
-        row.appendChild(settings.createNumberStepInput(cell_class, input_class, 'smoothRate', data.smoothRate, common.defaultSmoothRate, common.minSmoothRate, common.maxSmoothRate, common.stepSmoothRate, common.limitRate));
-        container.appendChild(row);
-    } {
-        const row = settings.createRow(row_class);
-        row.appendChild(settings.createLabel(cell_class));
-        row.appendChild(settings.createLabel(cell_class, `${common.maxSmoothRate.toFixed(0)} ms: Lower load<br>${common.minSmoothRate.toFixed(0)} ms: Higher load`));
-        container.appendChild(row);
     }
 
     settings.registerResetButton(reset_button, progress_div, progress_class, done_class, toggle_class, input_class, progress);
