@@ -138,7 +138,7 @@ function main(common) {
     function updatePan() {
         if (enabled) {
             try {
-                chrome.runtime.sendMessage('GetCurrentWindow').then(currentWindow => {
+                chrome.runtime.sendMessage({ msg: 'GetCurrentWindow' }).then(currentWindow => {
                     updateWindowPan(currentWindow);
                 });
             } catch {
@@ -151,15 +151,15 @@ function main(common) {
 
     function updateWindowPan(targetWindow) {
         if (panner && targetWindow.state !== 'minimized') {
-            const center_x = window.screen.width / 2.0;
-            if (panner.pan) {
-                panner.pan.value = Math.min(1.0, Math.max(-1.0, (targetWindow.left + targetWindow.width / 2.0 - center_x) / center_x * panRate));
-            } else {
-                const center_y = window.screen.height / 2.0;
-                const s = Math.min(1.0, Math.max(-1.0, (targetWindow.left + targetWindow.width / 2.0 - center_x) / center_x * panRate));
-                const t = Math.min(1.0, Math.max(-1.0, (targetWindow.top + targetWindow.height / 2.0 - center_y) / center_y * panRate));
-                [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0.0, 0.0, -1.0], s), t);
-            }
+            chrome.runtime.sendMessage({ msg: 'GetCenter', screen_width: screen.width, screen_height: screen.height }).then(responce => {
+                if (panner.pan) {
+                    panner.pan.value = Math.min(1.0, Math.max(-1.0, (targetWindow.left + targetWindow.width / 2.0 - responce.center_x) / responce.center_x * panRate));
+                } else {
+                    const s = Math.min(1.0, Math.max(-1.0, (targetWindow.left + targetWindow.width / 2.0 - responce.center_x) / responce.center_x * panRate));
+                    const t = Math.min(1.0, Math.max(-1.0, (targetWindow.top + targetWindow.height / 2.0 - responce.center_y) / responce.center_y * panRate));
+                    [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0.0, 0.0, -1.0], s), t);
+                }
+            });
         }
     }
 
