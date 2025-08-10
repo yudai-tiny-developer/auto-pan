@@ -1,4 +1,4 @@
-export const storage = ['enabled', 'panRate', 'pan2d'];
+export const storage = ['enabled', 'panRate', 'pan2d', 'multimonitor'];
 
 export const defaultEnabled = true;
 
@@ -8,6 +8,7 @@ export const maxPanRate = 2.0;
 export const stepPanRate = 0.1;
 
 export const defaultPan2d = false;
+export const defaultMultimonitor = false;
 
 export function value(value, defaultValue) {
     return value === undefined ? defaultValue : value;

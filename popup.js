@@ -41,6 +41,11 @@ function main(common, settings, progress, data) {
         row.appendChild(settings.createLabel(cell_class, 'Use vertical'));
         row.appendChild(settings.createToggle(cell_class, toggle_class, label_class, 'pan2d', data.pan2d, common.defaultpPan2d, common.value));
         container.appendChild(row);
+    } {
+        const row = settings.createRow(row_class);
+        row.appendChild(settings.createLabel(cell_class, 'Adjustment for multi-monitor (experimental)'));
+        row.appendChild(settings.createToggle(cell_class, toggle_class, label_class, 'multimonitor', data.multimonitor, common.defaultMultimonitor, common.value));
+        container.appendChild(row);
     }
 
     settings.registerResetButton(reset_button, progress_div, progress_class, done_class, toggle_class, input_class, progress);
