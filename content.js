@@ -8,6 +8,7 @@ function main(common) {
             enabled = common.value(data.enabled, common.defaultEnabled);
             panRate = common.limitRate(data.panRate, common.defaultPanRate, common.minPanRate, common.maxPanRate, common.stepPanRate);
             pan2d = common.value(data.pan2d, common.defaultPan2d);
+            multimonitor = common.value(data.multimonitor, common.defaultMultimonitor);
 
             setPannerOrStereoPanner();
 
@@ -151,7 +152,7 @@ function main(common) {
 
     function updateWindowPan(targetWindow) {
         if (panner && targetWindow.state !== 'minimized') {
-            chrome.runtime.sendMessage({ msg: 'GetCenter', screen_width: screen.width, screen_height: screen.height }).then(responce => {
+            chrome.runtime.sendMessage({ msg: 'GetCenter', multimonitor, screen_width: screen.width, screen_height: screen.height }).then(responce => {
                 if (panner.pan) {
                     panner.pan.value = Math.min(1.0, Math.max(-1.0, (targetWindow.left + targetWindow.width / 2.0 - responce.center_x) / responce.center_x * panRate));
                 } else {
@@ -192,6 +193,7 @@ function main(common) {
     let enabled = common.defaultEnabled;
     let panRate = common.defaultPanRate;
     let pan2d = common.defaultPan2d;
+    let multimonitor = common.defaultMultimonitor;
     let context = new AudioContext();
     let panner;
     let sources = new Map();
