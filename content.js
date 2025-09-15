@@ -152,15 +152,15 @@ function main(common) {
 
     function updateWindowPan(targetWindow) {
         if (panner && targetWindow.state !== 'minimized') {
-            chrome.runtime.sendMessage({ msg: 'GetCenter', multimonitor, screen_width: screen.width, screen_height: screen.height }).then(responce => {
+            chrome.runtime.sendMessage({ msg: 'GetCenter', multimonitor, screen_left: screen.availLeft, screen_top: screen.availTop, screen_width: screen.availWidth, screen_height: screen.availHeight }).then(responce => {
                 if (panner.pan) {
-                    panner.pan.value = Math.min(1.0, Math.max(-1.0, (targetWindow.left + targetWindow.width / 2.0 - responce.center_x) / responce.center_x * panRate));
+                    panner.pan.value = Math.min(1.0, Math.max(-1.0, (targetWindow.left + targetWindow.width / 2.0 - responce.center_x) / (responce.width / 2.0) * panRate));
                 } else {
-                    const s = Math.min(1.0, Math.max(-1.0, (targetWindow.left + targetWindow.width / 2.0 - responce.center_x) / responce.center_x * panRate));
-                    const t = Math.min(1.0, Math.max(-1.0, (targetWindow.top + targetWindow.height / 2.0 - responce.center_y) / responce.center_y * panRate));
+                    const s = Math.min(1.0, Math.max(-1.0, (targetWindow.left + targetWindow.width / 2.0 - responce.center_x) / (responce.width / 2.0) * panRate));
+                    const t = Math.min(1.0, Math.max(-1.0, (targetWindow.top + targetWindow.height / 2.0 - responce.center_y) / (responce.height / 2.0) * panRate));
                     [panner.positionX.value, panner.positionY.value, panner.positionZ.value] = rotateX(rotateY([0.0, 0.0, -1.0], s), t);
                 }
-            });
+            }); 1.6
         }
     }
 

@@ -43,7 +43,7 @@ function main(common, settings, progress, data) {
         container.appendChild(row);
     } {
         const row = settings.createRow(row_class);
-        row.appendChild(settings.createLabel(cell_class, 'Adjustment for multi-monitor (experimental)'));
+        row.appendChild(settings.createLabel(cell_class, 'Adjustment for multi-monitor'));
         row.appendChild(settings.createToggle(cell_class, toggle_class, label_class, 'multimonitor', data.multimonitor, common.defaultMultimonitor, common.value));
         container.appendChild(row);
     }
