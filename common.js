@@ -4,7 +4,7 @@ export const defaultEnabled = true;
 
 export const defaultPanRate = 1.6;
 export const minPanRate = 0.1;
-export const maxPanRate = 2.0;
+export const maxPanRate = 8.0;
 export const stepPanRate = 0.1;
 
 export const defaultPan2d = false;

@@ -6,21 +6,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             });
             break;
         case 'GetCenter':
-            chrome.windows.getAll().then(windows => {
-                let left = 0;
-                let top = 0;
-                let right = message.screen_width;
-                let bottom = message.screen_height;
+            chrome.system.display.getInfo().then(displays => {
+                let left = message.screen_left;
+                let top = message.screen_right;
+                let right = message.screen_left + message.screen_width;
+                let bottom = message.screen_right + message.screen_height;
                 if (message.multimonitor) {
-                    for (const window of windows) {
-                        left = Math.min(left, window.left);
-                        top = Math.min(top, window.top);
-                        right = Math.max(right, window.left + window.width);
-                        bottom = Math.max(bottom, window.top + window.height);
+                    for (const display of displays) {
+                        left = Math.min(left, display.bounds.left);
+                        top = Math.min(top, display.bounds.top);
+                        right = Math.max(right, display.bounds.left + display.bounds.width);
+                        bottom = Math.max(bottom, display.bounds.top + display.bounds.height);
                     }
                 }
-                sendResponse({ center_x: (right - left) / 2.0, center_y: (bottom - top) / 2.0 });
-
+                sendResponse({ center_x: (left + right) / 2.0, center_y: (top + bottom) / 2.0, width: Math.abs(left) + Math.abs(right), height: Math.abs(top) + Math.abs(bottom) });
             });
             break;
     }
