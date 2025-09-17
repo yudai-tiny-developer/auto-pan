@@ -21,6 +21,9 @@ function main(common, settings, progress, data) {
     const reset_button = document.body.querySelector('input#reset');
     const progress_div = document.body.querySelector('div#reset_progress');
 
+    let input1;
+    let input2;
+
     {
         const row = settings.createRow(row_class);
         row.appendChild(settings.createLabel(cell_class, 'Enabled/Disabled'));
@@ -43,10 +46,33 @@ function main(common, settings, progress, data) {
         container.appendChild(row);
     } {
         const row = settings.createRow(row_class);
-        row.appendChild(settings.createLabel(cell_class, 'Adjustment for multi-monitor'));
-        row.appendChild(settings.createToggle(cell_class, toggle_class, label_class, 'multimonitor', data.multimonitor, common.defaultMultimonitor, common.value));
+        row.appendChild(settings.createLabel(cell_class, 'Adjust primary monitor'));
+        const { div, input } = settings.createToggle2(cell_class, toggle_class, label_class, 'multimonitor', data.multimonitor, common.defaultMultimonitor, common.value)
+        row.appendChild(div);
         container.appendChild(row);
+        input1 = input;
+    } {
+        const row = settings.createRow(row_class);
+        row.appendChild(settings.createLabel(cell_class, 'Adjust all monitors'));
+        const { div, input } = settings.createToggle2(cell_class, toggle_class, label_class, 'multimonitor_all', data.multimonitor_all, common.defaultMultimonitor_all, common.value)
+        row.appendChild(div);
+        container.appendChild(row);
+        input2 = input;
     }
+
+    input1.addEventListener('change', () => {
+        if (input1.checked && input2.checked) {
+            input2.checked = false;
+            input2.dispatchEvent(new CustomEvent('change'));
+        }
+    });
+
+    input2.addEventListener('change', () => {
+        if (input1.checked && input2.checked) {
+            input1.checked = false;
+            input1.dispatchEvent(new CustomEvent('change'));
+        }
+    });
 
     settings.registerResetButton(reset_button, progress_div, progress_class, done_class, toggle_class, input_class, progress);
 }

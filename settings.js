@@ -35,6 +35,30 @@ export function createToggle(cell_class, toggle_class, label_class, key, checked
     return div;
 }
 
+export function createToggle2(cell_class, toggle_class, label_class, key, checked, defaultValue, checkForDefault) {
+    const div = document.createElement('div');
+    div.classList.add(cell_class);
+
+    const input = document.createElement('input');
+    input.id = key;
+    input.classList.add(toggle_class);
+    input.type = 'checkbox';
+    input.checked = checkForDefault(checked, defaultValue);
+
+    input.setAttribute('defaultValue', defaultValue);
+    input.addEventListener('change', () => {
+        chrome.storage.local.set({ [key]: input.checked });
+    });
+    div.appendChild(input);
+
+    const label = document.createElement('label');
+    label.classList.add(label_class);
+    label.setAttribute('for', key);
+    div.appendChild(label);
+
+    return { div, input };
+}
+
 export function createNumberStepInput(cell_class, input_class, key, value, defaultValue, minRate, maxRate, stepRate, limitRate) {
     const div = document.createElement('div');
     div.classList.add(cell_class);

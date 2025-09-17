@@ -14,7 +14,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse(response);
             });
             break;
-        case 'GetCenter':
+        case 'GetCenterPrimary':
             chrome.system.display.getInfo().then(displays => {
                 for (const display of displays) {
                     if (display.isPrimary) {
@@ -24,6 +24,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 }
 
                 sendResponse(undefined); // primary display not found
+            });
+            break;
+        case 'GetCenterAll':
+            chrome.system.display.getInfo().then(displays => {
+                let left = message.screen_left;
+                let top = message.screen_top;
+                let right = message.screen_left + message.screen_width;
+                let bottom = message.screen_top + message.screen_height;
+                for (const display of displays) {
+                    left = Math.min(left, display.bounds.left);
+                    top = Math.min(top, display.bounds.top);
+                    right = Math.max(right, display.bounds.left + display.bounds.width);
+                    bottom = Math.max(bottom, display.bounds.top + display.bounds.height);
+                }
+                sendResponse({ center_x: (left + right) / 2.0, center_y: (top + bottom) / 2.0, width: Math.abs(left) + Math.abs(right), height: Math.abs(top) + Math.abs(bottom) });
             });
             break;
     }
