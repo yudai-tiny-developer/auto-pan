@@ -17,18 +17,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         case 'GetCenter':
             chrome.system.display.getInfo().then(displays => {
                 for (const display of displays) {
-                    if (message.multimonitor) {
-                        if (display.isPrimary) {
-                            sendResponse({ center_x: display.bounds.left + display.bounds.width / 2.0, center_y: display.bounds.top + display.bounds.height / 2.0, width: display.bounds.width, height: display.bounds.height });
-                            break;
-                        }
-                    } else {
-                        if (isPointInBounds(message.center_x, message.center_y, display.bounds)) {
-                            sendResponse({ center_x: display.bounds.left + display.bounds.width / 2.0, center_y: display.bounds.top + display.bounds.height / 2.0, width: display.bounds.width, height: display.bounds.height });
-                            break;
-                        }
+                    if (display.isPrimary) {
+                        sendResponse({ center_x: display.bounds.left + display.bounds.width / 2.0, center_y: display.bounds.top + display.bounds.height / 2.0, width: display.bounds.width, height: display.bounds.height });
+                        return;
                     }
                 }
+
+                sendResponse(undefined); // primary display not found
             });
             break;
     }
