@@ -25,6 +25,57 @@ div.footer {
     caption-side: bottom;
 }
 
+div#preview-title {
+    display: none;
+    padding-top: 32px;
+}
+
+div#preview {
+    display: none;
+    position: relative;
+    width: 320px;
+    height: 160px;
+    overflow: hidden;
+    transform: translateX(8px);
+}
+
+div.preview-display {
+    position: absolute;
+    background-color: #ffffff;
+    overflow: hidden;
+    box-sizing: border-box;
+    border-color: #808080;
+    border-width: 2px;
+    border-style: solid;
+    text-align: center;
+    align-content: center;
+}
+
+div.preview-display-base {
+    border-color: #ff0000 !important;
+    z-index: 1;
+}
+
+div.preview-display-left {
+    position: absolute;
+    background-color: #0000ff;
+    opacity: 0.4;
+}
+
+div.preview-display-right {
+    position: absolute;
+    background-color: #00ff00;
+    opacity: 0.4;
+}
+
+div.preview-display-overall {
+    position: absolute;
+    overflow: hidden;
+    box-sizing: border-box;
+    border-width: 2px;
+    border-style: solid;
+}
+
 input.toggle {
     display: none;
 }
@@ -109,6 +160,10 @@ div#reset_progress.done {
         fill: rgb(0, 0, 0);
     }
 
+    div.preview-display-overall {
+        border-color: rgb(249, 249, 249);
+    }
+
     label.switch {
         background-color: rgb(187, 187, 187);
         border-color: rgb(73, 73, 73);
@@ -157,6 +212,10 @@ div#reset_progress.done {
     div.cell {
         color: rgb(255, 255, 255);
         fill: rgb(255, 255, 255);
+    }
+
+    div.preview-display-overall {
+        border-color: rgb(26, 26, 26);
     }
 
     label.switch {
