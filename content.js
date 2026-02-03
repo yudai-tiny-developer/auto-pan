@@ -75,9 +75,11 @@ function main(common) {
 
     function addEventListenerToAllMedia() {
         for (const media of document.body.querySelectorAll('video:not([_auto-pan]), audio:not([_auto-pan])')) {
-            context.resume().then(() => {
-                setMediaElementSource(media);
-            });
+            if (!sources.has(media)) {
+                context.resume().then(() => {
+                    setMediaElementSource(media);
+                });
+            }
         }
     }
 
